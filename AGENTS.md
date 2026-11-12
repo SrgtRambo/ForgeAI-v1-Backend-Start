@@ -28,3 +28,10 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Project architecture
+
+- The Forge workspace is the original vanilla-JS app in `public/forge/` (markup in `workspace.html`, scripts loaded in order by `src/routes/_authenticated/studio.tsx`); keep it vanilla and bump `FORGE_VERSION` in the studio route when those files change, because they are cached static assets.
+- Forge scripts never touch the database or AI directly: they go through `window.ForgeCloud` (`src/lib/forge-cloud.ts`), which diff-syncs the in-memory project list to `forge_projects` and supplies the bearer token, so all persistence stays behind RLS.
+- AI calls go only through `/api/forge/chat` (`src/lib/forge-ai.server.ts`), which verifies the bearer token, claims a per-user quota via the `claim_ai_request` SQL function, and returns an Ollama-shaped JSON body after whitespace heartbeats so `ai-provider.js` keeps its original response contract.
+- Request validation and limits live in `src/lib/forge-ai-rules.ts` (pure, unit-tested in `src/test/`); client output-token caps are visible-output budgets and the server adds fixed reasoning headroom because reasoning shares the same budget.
