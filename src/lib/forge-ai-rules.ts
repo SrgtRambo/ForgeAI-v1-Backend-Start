@@ -64,6 +64,17 @@ export function toStrictSchema(input: unknown): JsonSchema {
       out[key] = value;
     }
   }
+  // Strict mode can't enforce item counts, so state them for the model instead.
+  const min = source.minItems, max = source.maxItems;
+  if (typeof min === "number" || typeof max === "number") {
+    const bound =
+      typeof min === "number" && typeof max === "number"
+        ? `Between ${min} and ${max} items.`
+        : typeof max === "number"
+          ? `At most ${max} items.`
+          : `At least ${min} items.`;
+    out.description = [typeof source.description === "string" ? source.description : "", bound].filter(Boolean).join(" ");
+  }
   if (out.type === "object") {
     const properties = (out.properties as JsonSchema | undefined) ?? {};
     out.properties = properties;

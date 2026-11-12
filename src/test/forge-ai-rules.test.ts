@@ -43,6 +43,7 @@ describe("Forge AI request rules", () => {
     expect(strict.additionalProperties).toBe(false);
     const b = (strict.properties as Record<string, Record<string, unknown>>).b;
     expect(b.maxItems).toBeUndefined();
+    expect(b.description).toBe("At most 3 items.");
     expect((b.items as Record<string, unknown>).additionalProperties).toBe(false);
   });
 });
