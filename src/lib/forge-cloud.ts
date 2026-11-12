@@ -82,6 +82,7 @@ export function createForgeCloud(
       })
       .catch((error: unknown) => {
         console.error("[forge] save failed", error);
+        if (pending === null) pending = next;
         onState("error", error instanceof Error ? error.message : "Unknown error");
       });
     return running;
