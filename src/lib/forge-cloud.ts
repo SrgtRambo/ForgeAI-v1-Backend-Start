@@ -15,7 +15,7 @@ export interface ForgeCloudBridge {
 
 declare global {
   interface Window {
-    ForgeCloud?: ForgeCloudBridge;
+    ForgeCloud?: ForgeCloudBridge | undefined;
   }
 }
 

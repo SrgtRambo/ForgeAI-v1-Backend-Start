@@ -13,10 +13,14 @@ import { safeRedirect } from "@/lib/safe-redirect";
 type Mode = "signin" | "signup" | "forgot";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    redirect: typeof search.redirect === "string" ? search.redirect : undefined,
-    mode: search.mode === "signup" || search.mode === "forgot" ? (search.mode as Mode) : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { redirect?: string; mode?: Mode } => {
+    const out: { redirect?: string; mode?: Mode } = {};
+    const redirect = search["redirect"];
+    const mode = search["mode"];
+    if (typeof redirect === "string") out.redirect = redirect;
+    if (mode === "signup" || mode === "forgot") out.mode = mode;
+    return out;
+  },
   head: () => ({
     meta: [
       { title: "Sign in — Forge AI" },
