@@ -30,7 +30,7 @@ function loadScript(src: string) {
     const script = document.createElement("script");
     script.src = src;
     script.async = false;
-    script.dataset.forge = "true";
+    script.dataset["forge"] = "true";
     script.onload = () => resolve(script);
     script.onerror = () => reject(new Error("Could not load " + src));
     document.body.appendChild(script);
@@ -44,7 +44,7 @@ function StudioPage() {
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [slot, setSlot] = useState<HTMLElement | null>(null);
-  const [sync, setSync] = useState<{ state: SyncState; message?: string }>({ state: "saved" });
+  const [sync, setSync] = useState<{ state: SyncState; message?: string | undefined }>({ state: "saved" });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 

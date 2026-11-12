@@ -55,17 +55,17 @@ export function toStrictSchema(input: unknown): JsonSchema {
   for (const [key, value] of Object.entries(source)) {
     if (DROPPED_KEYWORDS.has(key) || key === "required" || key === "additionalProperties") continue;
     if (key === "properties" && value && typeof value === "object") {
-      out.properties = Object.fromEntries(
+      out["properties"] = Object.fromEntries(
         Object.entries(value as JsonSchema).map(([name, child]) => [name, toStrictSchema(child)]),
       );
     } else if (key === "items") {
-      out.items = toStrictSchema(value);
+      out["items"] = toStrictSchema(value);
     } else {
       out[key] = value;
     }
   }
   // Strict mode can't enforce item counts, so state them for the model instead.
-  const min = source.minItems, max = source.maxItems;
+  const min = source["minItems"], max = source["maxItems"];
   if (typeof min === "number" || typeof max === "number") {
     const bound =
       typeof min === "number" && typeof max === "number"
@@ -73,13 +73,13 @@ export function toStrictSchema(input: unknown): JsonSchema {
         : typeof max === "number"
           ? `At most ${max} items.`
           : `At least ${min} items.`;
-    out.description = [typeof source.description === "string" ? source.description : "", bound].filter(Boolean).join(" ");
+    out["description"] = [typeof source["description"] === "string" ? source["description"] : "", bound].filter(Boolean).join(" ");
   }
-  if (out.type === "object") {
-    const properties = (out.properties as JsonSchema | undefined) ?? {};
-    out.properties = properties;
-    out.required = Object.keys(properties);
-    out.additionalProperties = false;
+  if (out["type"] === "object") {
+    const properties = (out["properties"] as JsonSchema | undefined) ?? {};
+    out["properties"] = properties;
+    out["required"] = Object.keys(properties);
+    out["additionalProperties"] = false;
   }
   return out;
 }
@@ -89,7 +89,7 @@ export function validateForgeChat(payload: unknown): ValidatedForgeChat {
     throw new ForgeRequestError("Invalid model request.");
   }
   const body = payload as Record<string, unknown>;
-  const rawMessages = body.messages;
+  const rawMessages = body["messages"];
   if (
     !Array.isArray(rawMessages) ||
     rawMessages.length < 1 ||
@@ -101,20 +101,20 @@ export function validateForgeChat(payload: unknown): ValidatedForgeChat {
     const m = message as Record<string, unknown> | null;
     if (
       !m ||
-      !["system", "user", "assistant"].includes(String(m.role)) ||
-      typeof m.content !== "string" ||
-      m.content.length > FORGE_AI_LIMITS.maxMessageChars
+      !["system", "user", "assistant"].includes(String(m["role"])) ||
+      typeof m["content"] !== "string" ||
+      m["content"].length > FORGE_AI_LIMITS.maxMessageChars
     ) {
       throw new ForgeRequestError("A model message is invalid or too long.");
     }
-    return { role: m.role as ForgeChatMessage["role"], content: m.content };
+    return { role: m["role"] as ForgeChatMessage["role"], content: m["content"] };
   });
   const conversation = messages.filter(
-    (m): m is { role: "user" | "assistant"; content: string } => m.role !== "system",
+    (m): m is { role: "user" | "assistant"; content: string } => m["role"] !== "system",
   );
   if (!conversation.length) throw new ForgeRequestError("The model request needs a user message.");
 
-  const format = body.format;
+  const format = body["format"];
   if (!format || typeof format !== "object" || Array.isArray(format)) {
     throw new ForgeRequestError("A structured JSON response format is required.");
   }
@@ -122,10 +122,10 @@ export function validateForgeChat(payload: unknown): ValidatedForgeChat {
     throw new ForgeRequestError("The response schema is too large.");
   }
   const schema = toStrictSchema(format);
-  if (schema.type !== "object") throw new ForgeRequestError("The response schema must describe an object.");
+  if (schema["type"] !== "object") throw new ForgeRequestError("The response schema must describe an object.");
 
   const requested =
-    body.maxOutputTokens === undefined ? FORGE_AI_LIMITS.defaultOutputTokens : body.maxOutputTokens;
+    body["maxOutputTokens"] === undefined ? FORGE_AI_LIMITS.defaultOutputTokens : body["maxOutputTokens"];
   if (
     !Number.isInteger(requested) ||
     (requested as number) < FORGE_AI_LIMITS.minOutputTokens ||
@@ -136,8 +136,8 @@ export function validateForgeChat(payload: unknown): ValidatedForgeChat {
 
   return {
     instructions: messages
-      .filter((m) => m.role === "system")
-      .map((m) => m.content)
+      .filter((m) => m["role"] === "system")
+      .map((m) => m["content"])
       .join("\n\n"),
     messages: conversation,
     schema,
