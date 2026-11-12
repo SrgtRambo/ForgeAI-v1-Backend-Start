@@ -138,7 +138,13 @@ export async function handleForgeChat(request: Request) {
   const encoder = new TextEncoder();
   const body = new ReadableStream<Uint8Array>({
     async start(controller) {
-      const heartbeat = setInterval(() => controller.enqueue(encoder.encode(" ")), 5000);
+      const heartbeat = setInterval(() => {
+        try {
+          controller.enqueue(encoder.encode(" "));
+        } catch {
+          clearInterval(heartbeat);
+        }
+      }, 5000);
       controller.enqueue(encoder.encode(" "));
       let finalPayload: unknown;
       try {
