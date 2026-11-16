@@ -1,9 +1,7 @@
 // In-process job runner. Webhooks only mark a purchase "queued"; the slow work happens here,
 // after Stripe has already received its 200 response.
-import { generateProject } from './engine.js';
+import { GenerationError, generateProject } from './engine.js';
 import { buildZip } from './packager.js';
-
-const PUBLIC_ERRORS = /^(The AI|.+ was still incomplete|.+ came out too large|OpenRouter returned 4)/;
 
 export function createJobRunner({ db, config, chat, log = console }) {
   const queue = [];
@@ -59,8 +57,8 @@ export function createJobRunner({ db, config, chat, log = console }) {
       log.info?.(`[jobs] ${purchaseId} ready (${Object.keys(project.files).length} files)`);
     } catch (err) {
       log.error?.(`[jobs] ${purchaseId} failed:`, err);
-      const message = PUBLIC_ERRORS.test(err?.message ?? '')
-        ? err.message
+      const message = err instanceof GenerationError
+        ? `${err.message} Contact support for a free retry.`
         : 'Generation failed because of a server problem. Contact support for a free retry.';
       await db.from('purchases').update({ status: 'failed', error: message.slice(0, 500) }).eq('id', purchaseId);
     }
