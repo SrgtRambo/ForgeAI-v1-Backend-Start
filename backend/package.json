@@ -1,0 +1,20 @@
+{
+  "name": "forgeai-backend",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Forge AI paid generation engine: Stripe checkout, async multi-file OpenRouter generation, zipped delivery from Supabase Storage.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test test/"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "jszip": "^3.10.1",
+    "stripe": "^17.7.0"
+  }
+}
