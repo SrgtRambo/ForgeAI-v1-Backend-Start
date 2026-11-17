@@ -77,7 +77,7 @@
       errors: ["Invalid or unavailable browser storage is reported to the user", "Folder access cancellation does not overwrite files", "Existing project folder names receive a numeric suffix"],
       tests: ["Required files exist", "HTML core structure and internal references", "JavaScript syntax compilation", "Create/edit/delete and local persistence hooks", "Required form validation"],
       milestones: ["Generate a working local starter app", "Run the built-in source checks and preview the workflow", "Review with fictional sample data", "Refine the first workflow before adding integrations"],
-      requirements: { business, industry, size: d.size || "Not provided", employees: d.employees || "Not provided", activities: d.activities || "Not provided", tools: d.tools || "Not provided", problem, workflow, goal, features: d.features || "Derived from problem and outcome", users, success, constraints, followUpAnswers: Array.isArray(d.followUpAnswers) ? d.followUpAnswers : [] },
+      requirements: { productType: d.productType || "app", business, industry, size: d.size || "Not provided", employees: d.employees || "Not provided", activities: d.activities || "Not provided", tools: d.tools || "Not provided", problem, workflow, goal, features: d.features || "Derived from problem and outcome", users, success, constraints, followUpAnswers: Array.isArray(d.followUpAnswers) ? d.followUpAnswers : [] },
       questions
     };
     const ai = d.aiArchitecture;
@@ -106,7 +106,7 @@
     } else architecture.provider = "local-rules";
     const lines = [
       "FORGE AI — SOFTWARE ARCHITECTURE", ai ? "LOCAL AI DRAFT · REVIEW BEFORE GENERATION" : "RULE-BASED LOCAL DRAFT · REVIEW BEFORE GENERATION", "",
-      "APPLICATION OVERVIEW", architecture.overview, `Industry: ${industry}`, `Primary users: ${users}`, `Success measure: ${success}`, "",
+      "APPLICATION OVERVIEW", architecture.overview, `Product type: ${window.ForgeAIProvider && window.ForgeAIProvider.productLabel ? window.ForgeAIProvider.productLabel(d.productType) : (d.productType || "app")}`, `Industry: ${industry}`, `Primary users: ${users}`, `Success measure: ${success}`, "",
       "REQUIREMENTS", `Problem: ${problem}`, `Desired outcome: ${goal}`, `Current workflow: ${workflow}`, `Current tools: ${d.tools || "Not provided"}`, `Constraints: ${constraints}`, "",
       "TECHNOLOGY", ...architecture.technology.map((item) => "• " + item), "",
       "APPLICATION STRUCTURE", ...architecture.structure.map((item) => "• " + item), "",

@@ -137,7 +137,7 @@
       let outputError = null;
       for (let attempt = 0; attempt < 2; attempt++) {
         const payload = await postChat({ model: config.model, stream: false, format: schema, maxOutputTokens: attempt === 0 ? 2048 : 4096, options: { num_ctx: 8192, temperature: 0.2 }, messages: [
-            { role: "system", content: "You are a careful software product architect and product designer. Return only the requested JSON architecture. Design a genuinely business-specific first version: name concrete screens, domain entities, fields, metrics, and end-to-end workflows derived from the requirements. Keep it small enough to implement reliably as a local browser app; use at most six screens and combine closely related tasks. Define a distinctive visual direction for this particular business and workflow, including a deliberate style, 4–6 concrete color values, typography using available system fonts, composition, and one signature visual detail. Avoid the same generic dashboard, sidebar, card grid, or work queue across businesses. Do not default to a generic work queue, CRM, inventory app, or generic CRUD dashboard unless that is actually the requested product. Do not invent numeric business limits, compatibility rules, temperatures, authentication, privacy guarantees, or notifications; mark unknown domain values as configurable or ask about them. Do not imply browser localStorage provides accounts or access control. Keep scope runnable with browser HTML/CSS/JavaScript and localStorage. Do not claim integrations or capabilities not requested. Identify assumptions as questions." +
+            { role: "system", content: "You are a careful software product architect and product designer. Return only the requested JSON architecture. Design a genuinely business-specific first version: name concrete screens, domain entities, fields, metrics, and end-to-end workflows derived from the requirements. Keep it small enough to implement reliably as a local browser app; use at most six screens and combine closely related tasks. Define a distinctive visual direction for this particular business and workflow, including a deliberate style, 4–6 concrete color values, typography using available system fonts, composition, and one signature visual detail. Avoid the same generic dashboard, sidebar, card grid, or work queue across businesses. Do not default to a generic work queue, CRM, inventory app, or generic CRUD dashboard unless that is actually the requested product. Do not invent numeric business limits, compatibility rules, temperatures, authentication, privacy guarantees, or notifications; mark unknown domain values as configurable or ask about them. Do not imply browser localStorage provides accounts or access control. Keep scope runnable with browser HTML/CSS/JavaScript and localStorage. Do not claim integrations or capabilities not requested. Identify assumptions as questions." + productGuide(requirements) +
               (attempt === 1 ? " The previous response was incomplete or invalid (" + outputError.message + "). Return a complete response that satisfies every required field and limit; do not truncate the JSON." : "") },
             { role: "user", content: "Create a first-version architecture for this business. Requirements JSON:\n" + JSON.stringify(requirements) }
           ] }, controller.signal);
@@ -173,7 +173,7 @@
     const timer = setTimeout(() => controller.abort(), timeoutMs || 180000);
     try {
       const payload = await postChat({ model: config.model, stream: false, format: followUpSchema, maxOutputTokens: 768, options: { num_ctx: 8192, temperature: 0.2 }, messages: [
-          { role: "system", content: "You are conducting business software discovery. Review the answers and ask up to five short, high-value follow-up questions only when their answers would materially change the application workflow, data, user access, or constraints. Do not repeat answered questions. Return an empty questions array if the information is sufficient. Return only the requested JSON." },
+          { role: "system", content: "You are conducting business software discovery. Review the answers and ask up to five short, high-value follow-up questions only when their answers would materially change the application workflow, data, user access, or constraints. Do not repeat answered questions. Return an empty questions array if the information is sufficient. Return only the requested JSON." + productGuide(requirements) },
           { role: "user", content: "Identify the most important missing details before designing this application. Requirements JSON:\n" + JSON.stringify(requirements) }
         ] }, controller.signal);
       let content = payload && payload.message && payload.message.content;
@@ -193,6 +193,15 @@
       "README.md": "# " + business + "\n\n" + overview + "\n\n## Run\nOpen `index.html` in a modern browser. No installation or external service is required. Application records are stored in this browser on this device.\n\n## Approved workflows\n" + (workflows.length ? workflows.map((workflow) => "- " + String(workflow)).join("\n") : "- See the approved architecture in `project.json`.") + "\n\n## Files\n- `index.html` — custom application structure\n- `css/styles.css` — custom responsive styling\n- `js/app.js` — custom application behavior\n- `data/sample-data.js` — optional sample records (empty by default)\n- `project.json` — Forge project and architecture metadata\n"
     };
   }
+  const PRODUCT_TYPES = {
+    website: { label: "Website", guide: "PRODUCT TYPE: WEBSITE. Build a polished, multi-section marketing website for this business that customers visit: hero with a clear call to action, services or offerings, proof (testimonials, results, or credentials), about, FAQ, and a working contact or booking request form whose submissions are saved and listed in a small owner inbox view. Use in-page navigation between sections. It must read like a real business website, not a dashboard." },
+    app: { label: "Web app", guide: "PRODUCT TYPE: WEB APP. Build an interactive application that the team or customers use daily: concrete screens for the core workflow, forms that create and update the business's real records, status changes, search or filtering where useful, and a summary of what needs attention next." },
+    sheets: { label: "Spreadsheet tool", guide: "PRODUCT TYPE: SPREADSHEET TOOL. Build a spreadsheet-style data tool: import CSV files via a file input (parse with FileReader, handle quoted fields), show the data in an editable grid, let users add/remove rows and columns, sort and filter, compute totals or business-specific summary formulas, flag bad or missing values, and export the cleaned data back to CSV with a download link. No external libraries." },
+    software: { label: "Business software", guide: "PRODUCT TYPE: BUSINESS SOFTWARE. Build an internal operations system with a sidebar or tab navigation across several modules (for example records, scheduling, billing status, and reports), role-aware views described in the requirements, and reports with simple charts drawn using plain HTML/CSS or inline SVG. No external libraries." },
+    social: { label: "Social media kit", guide: "PRODUCT TYPE: SOCIAL MEDIA KIT. Build a social media workspace for this business: a content calendar/post planner, a post composer with per-platform character counts, reusable branded post templates rendered as live visual previews (square and story sizes) in the business's palette, a hashtag and caption library, and a list of scheduled/draft/published posts. No real posting or network calls." }
+  };
+  function productLabel(type) { return (PRODUCT_TYPES[type] || PRODUCT_TYPES.app).label; }
+  function productGuide(requirements) { const type = requirements && requirements.productType; return " " + (PRODUCT_TYPES[type] || PRODUCT_TYPES.app).guide + " The chosen product type is mandatory and must shape every screen, feature, and file."; }
   async function requestProjectFiles(requirements, architecture, timeoutMs, onProgress, existingFiles) {
     const config = settings();
     assertLocalEndpoint(config.endpoint);
@@ -202,7 +211,7 @@
       if (!projectFiles.includes(path) || typeof content !== "string" || !content.trim()) throw new Error("Saved AI generation progress contains an invalid project file.");
       files[path] = content;
     }
-    const sourceRequirements = Object.fromEntries(["business", "industry", "problem", "workflow", "goal", "features", "users", "constraints", "success", "followUpAnswers"]
+    const sourceRequirements = Object.fromEntries(["productType", "business", "industry", "problem", "workflow", "goal", "features", "users", "constraints", "success", "followUpAnswers"]
       .filter((key) => requirements && requirements[key] !== undefined)
       .map((key) => [key, requirements[key]]));
     const sourceArchitecture = Object.fromEntries(["overview", "features", "modules", "screens", "navigation", "workflows", "entities", "validation", "visualDirection"]
@@ -334,7 +343,7 @@
                 model: config.model, stream: false, format: fileContentSchema, maxOutputTokens: outputLimit,
                 options: { num_ctx: 8192, temperature: 0.2 },
                 messages: [
-                  { role: "system", content: "You are building a genuinely custom, local-first business application, not adapting a generic template. " + stage.instructions + (attempt === 1 && stage.retryInstructions ? " " + stage.retryInstructions + (stageValidationFailure ? " The exact validation failure was: " + stageValidationFailure : "") : "") + " Return only JSON with a non-empty content string containing the complete source for " + stage.path + ". No markdown fences or explanation." },
+                  { role: "system", content: "You are building a genuinely custom, local-first business application, not adapting a generic template. " + stage.instructions + productGuide(requirements) + (attempt === 1 && stage.retryInstructions ? " " + stage.retryInstructions + (stageValidationFailure ? " The exact validation failure was: " + stageValidationFailure : "") : "") + " Return only JSON with a non-empty content string containing the complete source for " + stage.path + ". No markdown fences or explanation." },
                   { role: "user", content: userPrompt }
                 ]
               }, controller.signal);
@@ -378,7 +387,7 @@
     if (!config.enabled) throw new Error("Turn on Forge AI in Settings before requesting AI fix proposals.");
         if (!sourcePaths.includes(path)) throw new Error("Choose a supported application source file to fix.");
     if (typeof currentContent !== "string" || currentContent.length > 12000) throw new Error("This file is too large to include in a single fix request. Review it manually or select a smaller source file.");
-    const requirementsContext = Object.fromEntries(["business", "industry", "problem", "workflow", "goal", "features", "users", "constraints"].map((key) => [key, String(requirements && requirements[key] || "").slice(0, 400)]));
+    const requirementsContext = Object.fromEntries(["productType", "business", "industry", "problem", "workflow", "goal", "features", "users", "constraints"].map((key) => [key, String(requirements && requirements[key] || "").slice(0, 400)]));
     const architectureContext = Object.fromEntries(["overview", "features", "workflows", "validation"].map((key) => [key, key === "overview" ? String(architecture && architecture[key] || "").slice(0, 800) : (Array.isArray(architecture && architecture[key]) ? architecture[key].slice(0, 8).map((value) => String(value).slice(0, 250)) : [])]));
     const failureContext = (Array.isArray(failures) ? failures : []).filter((item) => item && !item.passed).slice(0, 6).map((item) => ({ name: String(item.name || "").slice(0, 120), detail: String(item.detail || "").slice(0, 500), advice: String(item.advice || "").slice(0, 500) }));
     const relatedSource = {};
@@ -396,7 +405,7 @@
     const timer = setTimeout(() => controller.abort(), timeoutMs || 180000);
     try {
       const payload = await postChat({ model: config.model, stream: false, format: fileProposalSchema, maxOutputTokens: 4096, options: { num_ctx: 8192, temperature: 0.2 }, messages: [
-          { role: "system", content: "Propose a complete replacement for only the requested application source file that addresses the reported failed checks while preserving valid existing behavior. Related files are context only: preserve their actual selectors and structure, do not invent elements or claim another file was changed. Do not edit Forge itself. Keep the app local: no network requests, external dependencies, eval, or dynamic code execution. Return only JSON with a non-empty content string. This is a proposal for human review, not an instruction to apply it." },
+          { role: "system", content: "Keep the app true to its chosen product type (" + productLabel(requirements && requirements.productType) + "). Propose a complete replacement for only the requested application source file that addresses the reported failed checks while preserving valid existing behavior. Related files are context only: preserve their actual selectors and structure, do not invent elements or claim another file was changed. Do not edit Forge itself. Keep the app local: no network requests, external dependencies, eval, or dynamic code execution. Return only JSON with a non-empty content string. This is a proposal for human review, not an instruction to apply it." },
           { role: "user", content: "Review the selected source, related project source, requirements, and each actual failed check. Return a proposed full replacement for the named file only:\n" + userContent }
         ] }, controller.signal);
       let content = payload && payload.message && payload.message.content;
@@ -434,5 +443,5 @@
       throw error;
     } finally { clearTimeout(timer); }
   }
-  window.ForgeAIProvider = { defaults, settings, configure, requestArchitecture, requestFollowUp, requestProjectFiles, requestFixProposal, checkConnection };
+  window.ForgeAIProvider = { defaults, settings, configure, requestArchitecture, requestFollowUp, requestProjectFiles, requestFixProposal, checkConnection, productLabel, productTypes: PRODUCT_TYPES };
 })();

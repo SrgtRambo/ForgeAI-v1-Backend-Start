@@ -107,7 +107,7 @@
   }
   function requirementsFromForm() {
     return {
-      business: $("business").value.trim(), industry: $("industry").value,
+      productType: $("productType").value, business: $("business").value.trim(), industry: $("industry").value,
       size: $("size").value, employees: $("employees").value.trim(),
       activities: $("activities").value.trim(), tools: $("tools").value.trim(),
       problem: $("problem").value.trim(), workflow: $("workflow").value.trim(),
@@ -117,13 +117,14 @@
   }
   function hydrateDiscovery(req) {
     if (!req) return;
-    for (const id of ["business", "industry", "size", "employees", "activities", "tools", "problem", "workflow", "goal", "features", "users", "success", "constraints"]) {
-      const field = $(id); if (field) field.value = req[id] || "";
+    for (const id of ["productType", "business", "industry", "size", "employees", "activities", "tools", "problem", "workflow", "goal", "features", "users", "success", "constraints"]) {
+      const field = $(id); if (field) field.value = req[id] || (id === "productType" ? "app" : "");
     }
   }
   function startNewProject() { newProjectDraft = true; pendingRequirements = null; $("discoveryForm").reset(); $("followupPanel").classList.add("hidden"); $("followupQuestions").replaceChildren(); clearNotice("discoveryNotice"); navigate("discovery"); }
   function renderRequirements(req) {
     const sections = [
+      ["PRODUCT TYPE", window.ForgeAIProvider.productLabel(req.productType)],
       ["BUSINESS OVERVIEW", `${req.business} · ${req.industry} · ${req.size}${req.employees ? " · " + req.employees + " employees" : ""}`],
       ["ACTIVITIES & TOOLS", [req.activities, req.tools && "Current tools: " + req.tools].filter(Boolean).join("\n") || "Not provided"],
       ["PROBLEM", req.problem], ["PROPOSED OUTCOME", req.goal], ["CURRENT WORKFLOW", req.workflow || "Follow-up needed"],
