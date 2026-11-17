@@ -13,6 +13,8 @@ import { FORGE_AI_LIMITS, ForgeRequestError, validateForgeChat } from "./forge-a
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1";
 const MODEL = "openai/gpt-6-astra";
+const OPENROUTER_URL = "https://openrouter.ai/api/v1";
+const OPENROUTER_MODEL = "google/gemini-2.5-flash";
 const MAX_BODY_BYTES = 512 * 1024;
 
 const baseHeaders = {
@@ -104,34 +106,50 @@ export async function handleForgeChat(request: Request) {
     return json(429, { error: message, status: 429 });
   }
 
-  const apiKey = process.env["LOVABLE_API_KEY"];
+  const openRouterKey = process.env["OPENROUTER_API_KEY"];
+  const apiKey = openRouterKey || process.env["LOVABLE_API_KEY"];
   if (!apiKey) return json(500, { error: "Forge AI is not configured.", status: 500 });
 
-  const runIdFetch = createLovableAiGatewayRunIdFetch(getLovableAiGatewayRunId(request));
-  const provider = createOpenAI({
-    baseURL: GATEWAY_URL,
-    apiKey,
-    headers: { "Lovable-API-Key": apiKey, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
-    fetch: runIdFetch.fetch,
-  });
-
-  const result = streamText({
-    model: provider.responses(MODEL),
-    ...(validated.instructions ? { instructions: validated.instructions } : {}),
+  const common = {
     messages: validated.messages,
     output: Output.object({ schema: jsonSchema(validated.schema as never) }),
     maxOutputTokens: validated.maxOutputTokens,
     abortSignal: request.signal,
-    providerOptions: {
-      openai: {
-        forceReasoning: true,
-        reasoningEffort: "low",
-        reasoningSummary: "auto",
-        store: false,
-        include: ["reasoning.encrypted_content"],
-      },
-    },
-  });
+  };
+
+  const runIdFetch = createLovableAiGatewayRunIdFetch(getLovableAiGatewayRunId(request));
+  const result = openRouterKey
+    ? streamText({
+        ...common,
+        model: createOpenAI({
+          baseURL: OPENROUTER_URL,
+          apiKey: openRouterKey,
+          headers: { "X-Title": "Forge AI" },
+        }).chat(OPENROUTER_MODEL),
+        ...(validated.instructions ? { system: validated.instructions } : {}),
+      })
+    : (() => {
+        const provider = createOpenAI({
+          baseURL: GATEWAY_URL,
+          apiKey,
+          headers: { "Lovable-API-Key": apiKey, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
+          fetch: runIdFetch.fetch,
+        });
+        return streamText({
+          ...common,
+          model: provider.responses(MODEL),
+          ...(validated.instructions ? { instructions: validated.instructions } : {}),
+          providerOptions: {
+            openai: {
+              forceReasoning: true,
+              reasoningEffort: "low",
+              reasoningSummary: "auto",
+              store: false,
+              include: ["reasoning.encrypted_content"],
+            },
+          },
+        });
+      })();
 
   // Send whitespace heartbeats while the model works so long generations keep the connection open.
   // Leading whitespace is valid JSON, so the browser can still call response.json().
