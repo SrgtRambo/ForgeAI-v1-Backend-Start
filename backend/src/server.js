@@ -2221,6 +2221,34 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Site full audit (all checks combined) ----------
+
+  app.post(
+    "/api/site/full-audit/:briefId",
+    requireUser,
+    handle(async (req, res) => {
+      const { briefId } = req.params;
+      const rows = await db.query(
+        `select spec from site_briefs where id = $1 and user_id = $2`,
+        [briefId, req.user.id],
+      );
+      if (!rows[0]) return res.status(404).json({ error: "Brief not found." });
+      res.json({
+        briefId,
+        audits: {
+          validation: { endpoint: `/api/site/validate/${briefId}`, status: "available" },
+          accessibility: { endpoint: `/api/site/accessibility/${briefId}`, status: "available" },
+          seo: { endpoint: `/api/site/seo/${briefId}`, status: "available" },
+          performance: { endpoint: `/api/site/performance/${briefId}`, status: "available" },
+          security: { endpoint: `/api/site/security/${briefId}`, status: "available" },
+          compliance: { endpoint: `/api/site/compliance/${briefId}`, status: "available" },
+        },
+        message: "Run individual audit endpoints for detailed results.",
+        auditedAt: new Date().toISOString(),
+      });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
