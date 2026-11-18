@@ -1494,6 +1494,46 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Notifications ----------
+
+  app.get(
+    "/api/notifications",
+    requireUser,
+    handle(async (req, res) => {
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const rows = await db.query(
+        `select id, title, message, type, read, resource_type, resource_id, created_at from notifications where user_id = $1 order by created_at desc limit 50`,
+        [req.user.id],
+      );
+      res.json({ notifications: rows });
+    }),
+  );
+
+  app.patch(
+    "/api/notifications/:id/read",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.params;
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const rows = await db.query(
+        `update notifications set read = true where id = $1 and user_id = $2 returning id`,
+        [id, req.user.id],
+      );
+      if (!rows[0]) return res.status(404).json({ error: "Notification not found." });
+      res.json({ read: true });
+    }),
+  );
+
+  app.post(
+    "/api/notifications/read-all",
+    requireUser,
+    handle(async (req, res) => {
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      await db.query(`update notifications set read = true where user_id = $1`, [req.user.id]);
+      res.json({ readAll: true });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(

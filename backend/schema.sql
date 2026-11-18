@@ -174,3 +174,19 @@ create table if not exists project_comments (
 );
 
 create index if not exists project_comments_project_id_idx on project_comments(project_id);
+
+-- Notifications for user activity.
+create table if not exists notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id text not null references users(id),
+  title text not null,
+  message text,
+  type text not null default 'info' check (type in ('info','success','warning','error')),
+  read boolean not null default false,
+  resource_type text,
+  resource_id text,
+  created_at timestamptz default now()
+);
+
+create index if not exists notifications_user_id_idx on notifications(user_id);
+create index if not exists notifications_read_idx on notifications(read);
