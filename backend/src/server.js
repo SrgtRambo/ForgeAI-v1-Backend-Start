@@ -1425,6 +1425,19 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- System status ----------
+
+  app.get("/api/system/status", (_req, res) => {
+    res.json({
+      version: "1.0.0",
+      environment: process.env.NODE_ENV || "development",
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      nodeVersion: process.version,
+      timestamp: new Date().toISOString(),
+    });
+  });
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
