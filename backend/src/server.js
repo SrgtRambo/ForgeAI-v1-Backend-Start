@@ -2285,6 +2285,34 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Site metrics (basic analytics) ----------
+
+  app.get(
+    "/api/site/metrics/:briefId",
+    requireUser,
+    handle(async (req, res) => {
+      const { briefId } = req.params;
+      const rows = await db.query(
+        `select spec from site_briefs where id = $1 and user_id = $2`,
+        [briefId, req.user.id],
+      );
+      if (!rows[0]) return res.status(404).json({ error: "Brief not found." });
+      const spec = rows[0].spec;
+      res.json({
+        briefId,
+        metrics: {
+          pageCount: spec.pages?.length || 0,
+          sectionCount: spec.pages?.reduce((acc, p) => acc + (p.sections?.length || 0), 0) || 0,
+          hasImages: spec.pages?.some((p) => p.sections?.some((s) => s.content?.imageId)),
+          hasForms: spec.pages?.some((p) => p.sections?.some((s) => s.type === "contact" || s.type === "booking")),
+          hasPricing: spec.pages?.some((p) => p.sections?.some((s) => s.type === "pricing")),
+          hasTestimonials: spec.pages?.some((p) => p.sections?.some((s) => s.type === "testimonials")),
+        },
+        trackedAt: new Date().toISOString(),
+      });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
