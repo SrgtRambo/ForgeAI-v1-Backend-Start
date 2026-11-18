@@ -1734,6 +1734,48 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- User preferences ----------
+
+  app.get(
+    "/api/users/me/preferences",
+    requireUser,
+    handle(async (req, res) => {
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const rows = await db.query(`select * from user_preferences where user_id = $1`, [req.user.id]);
+      if (!rows[0]) {
+        await db.query(`insert into user_preferences (user_id) values ($1)`, [req.user.id]);
+        const newRows = await db.query(`select * from user_preferences where user_id = $1`, [req.user.id]);
+        return res.json({ preferences: newRows[0] });
+      }
+      res.json({ preferences: rows[0] });
+    }),
+  );
+
+  app.patch(
+    "/api/users/me/preferences",
+    requireUser,
+    handle(async (req, res) => {
+      const { theme, language, notifications_enabled, email_digest } = req.body || {};
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const updates = [];
+      const params = [];
+      if (theme !== undefined) { updates.push(`theme = $${updates.length + 2}`); params.push(theme); }
+      if (language !== undefined) { updates.push(`language = $${updates.length + 2}`); params.push(language); }
+      if (notifications_enabled !== undefined) { updates.push(`notifications_enabled = $${updates.length + 2}`); params.push(notifications_enabled); }
+      if (email_digest !== undefined) { updates.push(`email_digest = $${updates.length + 2}`); params.push(email_digest); }
+      if (updates.length === 0) return res.status(400).json({ error: "Nothing to update." });
+      updates.push("updated_at = now()");
+      params.push(req.user.id);
+      const rows = await db.query(
+        `insert into user_preferences (user_id) values ($1) on conflict (user_id) do update set ${updates.join(", ")} returning *`,
+        [req.user.id, ...params.slice(0, -1)],
+      );
+      // Re-query to get full row
+      const final = await db.query(`select * from user_preferences where user_id = $1`, [req.user.id]);
+      res.json({ preferences: final[0] });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(

@@ -230,3 +230,13 @@ create table if not exists webhooks (
 );
 
 create index if not exists webhooks_user_id_idx on webhooks(user_id);
+
+-- User preferences.
+create table if not exists user_preferences (
+  user_id text primary key references users(id),
+  theme text default 'dark',
+  language text default 'en',
+  notifications_enabled boolean default true,
+  email_digest boolean default false,
+  updated_at timestamptz default now()
+);
