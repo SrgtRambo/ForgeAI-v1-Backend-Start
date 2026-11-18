@@ -2619,6 +2619,25 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Search site briefs by tag ----------
+
+  app.get(
+    "/api/site/briefs/by-tag/:tag",
+    requireUser,
+    handle(async (req, res) => {
+      const { tag } = req.params;
+      const rows = await db.query(
+        `select sb.id, sb.created_at, sb.updated_at, sb.spec->'meta'->>'businessName' as business_name
+         from site_briefs sb
+         join site_tags st on st.brief_id = sb.id
+         where sb.user_id = $1 and st.tag = $2
+         order by sb.updated_at desc`,
+        [req.user.id, tag.toLowerCase()],
+      );
+      res.json({ tag, results: rows });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
