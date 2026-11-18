@@ -2500,6 +2500,46 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Site export as markdown ----------
+
+  app.get(
+    "/api/site/export-markdown/:briefId",
+    requireUser,
+    handle(async (req, res) => {
+      const { briefId } = req.params;
+      const rows = await db.query(
+        `select spec from site_briefs where id = $1 and user_id = $2`,
+        [briefId, req.user.id],
+      );
+      if (!rows[0]) return res.status(404).json({ error: "Brief not found." });
+      const spec = rows[0].spec;
+      const lines = [];
+      lines.push(`# ${spec.meta?.businessName || "Site"}`);
+      lines.push("");
+      if (spec.meta?.tagline) lines.push(`> ${spec.meta.tagline}`);
+      lines.push("");
+      for (const page of spec.pages || []) {
+        lines.push(`## ${page.title || page.slug}`);
+        lines.push("");
+        for (const section of page.sections || []) {
+          lines.push(`### ${section.type} (${section.variant})`);
+          if (section.content) {
+            for (const [k, v] of Object.entries(section.content)) {
+              if (typeof v === "string" && v.length < 200) {
+                lines.push(`- **${k}**: ${v}`);
+              }
+            }
+          }
+          lines.push("");
+        }
+      }
+      const md = lines.join("\n");
+      res.setHeader("Content-Disposition", `attachment; filename="${(spec.meta?.businessName || "site").replace(/[^a-z0-9]/gi, "_")}.md"`);
+      res.setHeader("Content-Type", "text/markdown");
+      res.send(md);
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
