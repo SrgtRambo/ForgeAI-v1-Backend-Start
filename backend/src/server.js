@@ -1928,6 +1928,26 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Site restore from backup ----------
+
+  app.post(
+    "/api/site/restore",
+    requireUser,
+    handle(async (req, res) => {
+      const { backup } = req.body || {};
+      if (!backup || !backup.brief) {
+        return res.status(400).json({ error: "Valid backup data is required." });
+      }
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const b = backup.brief;
+      const newRows = await db.query(
+        `insert into site_briefs (user_id, input, analysis, spec) values ($1, $2, $3, $4) returning id`,
+        [req.user.id, JSON.stringify(b.input || {}), JSON.stringify(b.analysis || {}), JSON.stringify(b.spec || {})],
+      );
+      res.status(201).json({ briefId: newRows[0].id, restored: true });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
