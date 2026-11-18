@@ -23,6 +23,7 @@ import { validateByType, validateSocialKit, validateWorkflow, validateSpreadshee
 import { buildWorkbook, workbookToBuffer, createDefaultWorkbook } from "./spreadsheet.js";
 import { createSocialKit } from "./social-kit.js";
 import { createWorkflow } from "./workflow.js";
+import { createAppSpec } from "./app-generator.js";
 import { runQA } from "./qa/index.js";
 import { validateSpec } from "./site/spec.js";
 import { createUnsplashProvider } from "./images/unsplash.js";
@@ -1067,6 +1068,31 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
       else if (type === "spreadsheet") result = validateSpreadsheet(Buffer.from(data, "base64"));
       else result = validateByType(type, data);
       res.json(result);
+    }),
+  );
+
+  // ---------- Custom app generation ----------
+
+  app.post(
+    "/api/app/generate",
+    requireUser,
+    handle(async (req, res) => {
+      const { name, description, entities, features } = req.body || {};
+      if (!name || typeof name !== "string") {
+        return res.status(400).json({ error: "name is required." });
+      }
+      const appSpec = createAppSpec({ name, description, entities, features });
+      const zip = await (await import("jszip")).default().generateAsync({ type: "nodebuffer" });
+      // Build zip manually
+      const JSZip = (await import("jszip")).default;
+      const z = new JSZip();
+      for (const [path, content] of Object.entries(appSpec.files)) {
+        z.file(path, content);
+      }
+      const buffer = await z.generateAsync({ type: "nodebuffer" });
+      const storagePath = `${req.user.id}/app-${Date.now()}.zip`;
+      await storagePut(storagePath, buffer, "application/zip");
+      res.json({ storagePath, fileName: `${name.replace(/[^a-z0-9]/gi, "_")}.zip`, files: Object.keys(appSpec.files) });
     }),
   );
 

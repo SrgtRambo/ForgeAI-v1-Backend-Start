@@ -136,3 +136,18 @@ begin
     alter table projects add column created_at timestamptz default now();
   end if;
 end $$;
+
+-- Audit log: tracks important user actions.
+create table if not exists audit_log (
+  id uuid primary key default gen_random_uuid(),
+  user_id text references users(id),
+  action text not null,
+  resource_type text,
+  resource_id text,
+  details jsonb,
+  ip_address text,
+  created_at timestamptz default now()
+);
+
+create index if not exists audit_log_user_id_idx on audit_log(user_id);
+create index if not exists audit_log_created_at_idx on audit_log(created_at desc);

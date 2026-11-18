@@ -215,6 +215,14 @@ export async function validateArtifact(type: string, data: any) {
   return res.json();
 }
 
+export async function generateApp(body: { name: string; description?: string; entities?: any[]; features?: string[] }) {
+  const res = await apiRequest("/api/app/generate", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  return res.json();
+}
+
 export async function healthCheck() {
   const res = await apiRequest("/health");
   return res.json();
