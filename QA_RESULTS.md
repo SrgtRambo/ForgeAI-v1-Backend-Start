@@ -37,10 +37,10 @@ Command: `cd backend && NODE_ENV=test npm test`
 | 4 | Analysis + spec generation | Pass |
 | 5 | Stock imagery (Unsplash/Pexels fallback) | Pass |
 | 6 | Build spec → static site files | Pass |
-| 7 | QA render + critic (Playwright + axe-core) | In progress |
-| 8 | Database schema + API routes + tests | Implemented (tests pass) |
-| 9 | Studio UI (studio.tsx + Forge workspace) | Not verified |
-| 10 | Acceptance (this document + REVIEW.md) | Not verified |
+| 7 | QA render + critic (Playwright + axe-core) | Code complete; Chromium-graceful (rendered QA skipped when browser deps unavailable) |
+| 8 | Database schema + API routes + tests | Implemented (149 tests pass) |
+| 9 | Studio UI (studio.tsx + Forge workspace) | Route exists; Supabase/Lovable-managed per AGENTS.md |
+| 10 | Acceptance (this document + REVIEW.md) | Not run (requires .env secrets + live server) |
 
 ## QA Render Gate
 

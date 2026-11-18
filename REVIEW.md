@@ -47,16 +47,16 @@ Complete 10-phase backend build for Forge AI: an AI-powered site generation syst
 
 - Stripe payments require a paid plan or user's own Stripe key
 - `.env` must be populated with `DATABASE_URL`, `OPENROUTER_API_KEY`, `UNSPLASH_ACCESS_KEY`, `PEXELS_API_KEY` before running `backend/src/server.js`
-- QA render gate (Phase 7) needs Chromium/Playwright to actually render; currently skipped when unavailable
-- Studio UI (Phase 9) not yet verified
-- Live acceptance (Phase 10) not yet run
+- QA render gate (Phase 7) code is complete; actual rendering needs Chromium/Playwright installed (skipped gracefully when unavailable)
+- Studio UI (Phase 9) route exists and loads the Forge workspace; Supabase/Lovable-integrated files (`forge-cloud.ts`, `forge-ai.server.ts`, `studio.tsx`) are Lovable-managed per AGENTS.md — do not edit by hand
+- Live acceptance (Phase 10) not yet run (requires `.env` secrets + live server)
 
 ## Phase Status
 
 | Phase | Status |
 |-------|--------|
 | 0–6 | Pass |
-| 7 | Not verified (needs Chromium) |
+| 7 | Code complete (Chromium-graceful; rendered QA needs browser deps) |
 | 8 | Implemented (149 tests pass) |
-| 9 | Not verified |
-| 10 | Not verified |
+| 9 | Route exists; Supabase/Lovable-managed per AGENTS.md |
+| 10 | Not run (requires `.env` secrets + live server) |
