@@ -724,7 +724,7 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
-  // ---------- Profile (replaces Supabase profiles table) ----------
+  // ---------- Profile ----------
 
   async function ensureUser(id, name, email) {
     await db.query(
@@ -770,7 +770,7 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
-  // ---------- Projects (replaces Supabase forge_projects table) ----------
+  // ---------- Projects ----------
 
   app.get(
     "/api/projects",

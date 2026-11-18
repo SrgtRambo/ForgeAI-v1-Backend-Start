@@ -1,7 +1,7 @@
--- Forge AI database schema (plain Postgres, no Supabase-specific features).
+-- Forge AI database schema (plain Postgres, idempotent).
 -- Run this in your Postgres database (Replit provides DATABASE_URL automatically).
 
--- Users table (replaces Supabase auth.users references).
+-- Users table (Replit-native, no external auth dependency).
 create table if not exists users (
   id text primary key,
   name text,
@@ -79,7 +79,7 @@ create table if not exists site_image_assets (
 
 create index if not exists site_image_assets_brief_id_idx on site_image_assets(brief_id);
 
--- Projects: replaces Supabase forge_projects table. Stores user project state.
+-- Projects: stores user project state.
 create table if not exists projects (
   id text primary key,
   user_id text not null references users(id),
