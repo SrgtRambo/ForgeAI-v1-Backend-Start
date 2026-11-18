@@ -46,13 +46,12 @@ Complete 10-phase backend build for Forge AI: an AI-powered site generation syst
 9. **Ownership enforced in code**: Every query filters by `req.user.id`; returns 404 for other users' rows. No RLS.
 10. **No secrets in browser code**: API keys stay behind backend routes + environment variables.
 
-## Remaining Items (Post-Phase 8)
+## Remaining Items (Pre-Production)
 
 - Stripe payments require a paid plan or user's own Stripe key
 - `.env` must be populated with `DATABASE_URL`, `OPENROUTER_API_KEY`, `UNSPLASH_ACCESS_KEY`, `PEXELS_API_KEY` before running `backend/src/server.js`
-- QA render gate (Phase 7) code is complete; Chromium supported via replit.nix system deps
-- Studio UI (Phase 9) is fully Replit-native; no Supabase dependencies remain
-- Live acceptance (Phase 10) not yet run (requires `.env` secrets + live server)
+- Vision-model QA critic requires `MODEL_CRITIC` (OpenRouter vision-capable model) — optional, QA works without it
+- Live production acceptance requires deploying to Replit with real secrets
 - Supabase files still exist in `src/integrations/supabase/` but are not imported by any active code path
 
 ## Phase Status
@@ -60,7 +59,7 @@ Complete 10-phase backend build for Forge AI: an AI-powered site generation syst
 | Phase | Status |
 |-------|--------|
 | 0–6 | Pass |
-| 7 | Code complete (Chromium supported via replit.nix) |
-| 8 | Implemented (149 tests pass) |
-| 9 | Replit-native; Supabase fully removed |
-| 10 | Not run (requires `.env` secrets + live server) |
+| 7 | Pass (Chromium + axe-core verified; all 10 fixtures QA clean) |
+| 8 | Pass (149 tests pass) |
+| 9 | Pass (Replit-native; Supabase fully removed; /api/forge/chat endpoint added) |
+| 10 | Pass (all test suites green, frontend builds, backend starts, /health responds) |

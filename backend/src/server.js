@@ -8,7 +8,7 @@ import { pathToFileURL } from "node:url";
 
 import { loadConfig } from "./config.js";
 import { createJobRunner } from "./jobs.js";
-import { createOpenRouterChat } from "./openrouter.js";
+import { createMultiProviderChat } from "./ai-client.js";
 import { OrderError, validateOrder } from "./orders.js";
 import { ARCHETYPES } from "./archetypes.js";
 import { TIERS } from "./pricing.js";
@@ -219,14 +219,12 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
         });
       }
 
-      const modelChat = chat ?? createOpenRouterChat({
-        apiKey: config.openrouterKey,
-        referer: config.frontendUrl,
-      });
+      const modelChat = chat ?? createMultiProviderChat({ referer: config.frontendUrl });
       const modelAnalyzer = analyzer ?? createAnalyzer({
         chat: modelChat,
-        modelAnalysis: config.models.standard,
-        modelCopy: config.models.standard,
+        modelAnalysis: config.modelAnalysis,
+        modelSpec: config.modelSpec,
+        modelCopy: config.modelCopy,
       });
 
       const input = { description, businessName, industry, location, brandColors };
@@ -839,6 +837,46 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
+
+  app.get(
+    "/api/forge/chat",
+    requireUser,
+    handle(async (_req, res) => {
+      res.json({ ok: true });
+    }),
+  );
+
+  app.post(
+    "/api/forge/chat",
+    requireUser,
+    handle(async (req, res) => {
+      if (!config.aiConfigured) {
+        return res.status(503).json({ error: "Forge AI is not configured. Add OPENROUTER_API_KEY, GROQ_API_KEY, or KILO_API_KEY." });
+      }
+      const { model, stream, format, maxOutputTokens, options, messages } = req.body || {};
+      if (!messages || !Array.isArray(messages)) {
+        return res.status(400).json({ error: "messages is required." });
+      }
+      try {
+        const result = await chat({
+          model: model || config.modelStandard,
+          messages,
+          maxTokens: maxOutputTokens || 4096,
+          json: !!format,
+          temperature: options?.temperature ?? 0.4,
+        });
+        res.json({
+          model: model || config.modelStandard,
+          message: { role: "assistant", content: result.content },
+          done_reason: result.finishReason,
+        });
+      } catch (err) {
+        res.status(502).json({ error: err.message || "Forge AI request failed." });
+      }
+    }),
+  );
+
   // Multer error handler (e.g. file too large)
   app.use((err, req, res, next) => {
     if (err.code === "LIMIT_FILE_SIZE") {
@@ -855,7 +893,7 @@ async function main() {
   const config = loadConfig();
   const db = { query };
   const stripe = config.paymentsEnabled ? new Stripe(config.stripeSecretKey) : null;
-  const chat = createOpenRouterChat({ apiKey: config.openrouterKey, referer: config.frontendUrl });
+  const chat = createMultiProviderChat({ referer: config.frontendUrl });
   const jobs = createJobRunner({ db, config, chat });
   const app = createApp({ config, db, stripe, jobs });
   app.listen(config.port, async () => {

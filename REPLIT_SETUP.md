@@ -27,9 +27,12 @@ In Replit, go to **Secrets** (lock icon in the sidebar) and add:
 
 | Secret | Value | Required |
 |--------|-------|----------|
-| `OPENROUTER_API_KEY` | Your OpenRouter API key | Yes (AI analysis + generation) |
+| `OPENROUTER_API_KEY` | Your OpenRouter API key | Yes (primary AI provider) |
+| `GROQ_API_KEY` | Your Groq API key | No (fast fallback when OpenRouter rate-limits) |
+| `KILO_API_KEY` | Your Kilo API key | No (free-tier fallback) |
+| `AI_ENDPOINT` + `AI_API_KEY` | Custom OpenAI-compatible endpoint | No (custom provider) |
 | `UNSPLASH_ACCESS_KEY` | Your Unsplash access key | Yes (stock imagery) |
-| `PEXELS_API_KEY` | Your Pexels API key | Yes (stock imagery fallback) |
+| `PEXELS_API_KEY` | Your Pexels API key | No (stock imagery fallback; optional) |
 | `STRIPE_SECRET_KEY` | Your Stripe secret key | No (payments off without it) |
 | `STRIPE_WEBHOOK_SECRET` | Your Stripe webhook secret | No (payments off without it) |
 

@@ -74,12 +74,15 @@ function buildPage(page, spec, images, baseUrl) {
       const variant = module.variants[section.variant];
       if (!variant) return "";
       const imageMap = {};
+      const imageCredits = {};
       (images || []).forEach((img) => {
         imageMap[img.id] = resolveImageUrl(img.id, images);
+        if (img.credit) imageCredits[img.id] = img.credit;
       });
       const ctx = {
         content: section.content || {},
         images: imageMap,
+        imageCredits,
         palette: spec.design.palette,
         fonts: spec.design.fonts,
         density: spec.design.density,

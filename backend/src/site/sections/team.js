@@ -13,6 +13,11 @@ function esc(s) {
 function imgUrl(ctx, id) {
   return (ctx.images && ctx.images[id]) || "";
 }
+function memberCredit(ctx, id) {
+  const c = (ctx.imageCredits && ctx.imageCredits[id]) || {};
+  if (!c.photographer) return "";
+  return `<p class="image-credit">Photo by ${esc(c.photographer)} on ${c.provider === "unsplash" ? "Unsplash" : c.provider || "Stock"}</p>`;
+}
 function initials(name) {
   return (
     String(name ?? "")
@@ -93,7 +98,7 @@ export const variants = {
                 const alt = esc(m.photoAlt || m.name || "Team member");
                 return `
                 <article class="team-card">
-                  <div class="avatar photo"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"></div>
+                  <div class="avatar photo"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async">${memberCredit(ctx, m.photoImageId)}</div>
                   <h3>${esc(m.name || "")}</h3>
                   <p class="role">${esc(m.role || "")}</p>
                   ${m.bio ? `<p class="bio">${esc(m.bio)}</p>` : ""}
@@ -113,6 +118,7 @@ export const variants = {
       .team-card { text-align:center; background:var(--surface); border:1px solid var(--muted); border-radius:var(--radius); padding:calc(var(--space-unit) * 1.25); }
       .avatar.photo { width:72px; height:72px; border-radius:50%; overflow:hidden; background:var(--surface); margin:0 auto calc(var(--space-unit) * 0.75); border:2px solid var(--brand); }
       .avatar.photo img { width:100%; height:100%; object-fit:cover; display:block; border-radius:50%; }
+      .image-credit { font-family:var(--font-body); font-size:clamp(0.75rem,0.8vw + 0.2rem,0.8rem); color:var(--muted); margin-top:calc(var(--space-unit) * 0.5); }
       .team-card h3 { font-family:var(--font-display); margin:0 0 0.25rem; font-size:clamp(1.1rem,1.25vw + 0.4rem,1.25rem); color:var(--ink); }
       .role { font-family:var(--font-body); margin:0 0 calc(var(--space-unit) * 0.75); font-size:clamp(0.9rem,1vw + 0.3rem,1rem); color:var(--muted); }
       .bio { font-family:var(--font-body); margin:0; font-size:clamp(0.85rem,1vw + 0.25rem,0.95rem); line-height:1.5; color:var(--ink); }

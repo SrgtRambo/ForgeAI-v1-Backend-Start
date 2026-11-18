@@ -145,7 +145,7 @@ function StudioPage() {
         },
         flush,
         hasPendingChanges: () => pending !== null,
-        getAccessToken: async () => null,
+        getAccessToken: async () => "replit-session",
       };
 
       for (const file of FORGE_SCRIPTS) {

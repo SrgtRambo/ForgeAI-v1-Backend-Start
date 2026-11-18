@@ -2,10 +2,11 @@
 // Three model steps: A (business analysis), B (site spec), C (copy repair).
 // Each step is JSON-only, validated, with up to 2 retries feeding validator errors back.
 
-import { createOpenRouterChat } from "../openrouter.js";
+import { createMultiProviderChat } from "../ai-client.js";
 import { validateSpec } from "./spec.js";
 import { findBannedPhrase, scanBanned } from "./design/banned.js";
 import { SECTION_TYPES, sectionVariants } from "./catalog.js";
+import { extractJson } from "../text.js";
 
 const MAX_RETRIES = 2;
 
@@ -231,9 +232,10 @@ function stepCUserPrompt(content, banned) {
   ].join("\n");
 }
 
-export function createAnalyzer({ chat, modelAnalysis, modelCopy }) {
+export function createAnalyzer({ chat, modelAnalysis, modelSpec, modelCopy }) {
   if (!chat) throw new Error("createAnalyzer requires a chat function.");
   if (!modelAnalysis) throw new Error("createAnalyzer requires modelAnalysis.");
+  const modelSpecEffective = modelSpec || modelAnalysis;
 
   async function callModel({ model, messages, maxTokens = 4096, temperature = 0.3 }) {
     return chat({ model, messages, maxTokens, json: true, temperature });
@@ -260,7 +262,7 @@ export function createAnalyzer({ chat, modelAnalysis, modelCopy }) {
       const { content } = await callModel({ model: modelAnalysis, messages });
       let parsed;
       try {
-        parsed = JSON.parse(content);
+        parsed = extractJson(content);
       } catch (err) {
         lastError = new Error("Step A returned unparseable JSON: " + err.message);
         continue;
@@ -295,10 +297,10 @@ export function createAnalyzer({ chat, modelAnalysis, modelCopy }) {
         });
         if (onRetry) onRetry(attempt, lastError.message);
       }
-      const { content } = await callModel({ model: modelAnalysis, messages });
+      const { content } = await callModel({ model: modelSpecEffective, messages });
       let parsed;
       try {
-        parsed = JSON.parse(content);
+        parsed = extractJson(content);
       } catch (err) {
         lastError = new Error("Step B returned unparseable JSON: " + err.message);
         continue;
@@ -337,7 +339,7 @@ export function createAnalyzer({ chat, modelAnalysis, modelCopy }) {
       const { content: reply } = await callModel({ model: modelCopy || modelAnalysis, messages });
       let parsed;
       try {
-        parsed = JSON.parse(reply);
+        parsed = extractJson(reply);
       } catch (err) {
         lastError = new Error("Step C returned unparseable JSON: " + err.message);
         continue;
