@@ -73,6 +73,7 @@ create table if not exists site_briefs (
 );
 
 create index if not exists site_briefs_user_id_idx on site_briefs(user_id);
+alter table site_briefs add column if not exists is_favorite boolean not null default false;
 create index if not exists site_briefs_created_at_idx on site_briefs(created_at desc);
 
 -- Site image assets: tracks uploaded/stock/url images per brief and slot.
