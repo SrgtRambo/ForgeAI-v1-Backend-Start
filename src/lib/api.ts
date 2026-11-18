@@ -207,6 +207,14 @@ export async function reviseProject(id: string, instruction: string) {
   return res.json();
 }
 
+export async function validateArtifact(type: string, data: any) {
+  const res = await apiRequest("/api/qa/validate", {
+    method: "POST",
+    body: JSON.stringify({ type, data }),
+  });
+  return res.json();
+}
+
 export async function healthCheck() {
   const res = await apiRequest("/health");
   return res.json();

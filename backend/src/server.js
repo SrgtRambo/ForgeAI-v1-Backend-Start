@@ -19,6 +19,7 @@ import { put as storagePut, get as storageGet, remove as storageRemove } from ".
 import { requireUser } from "./infra/auth.js";
 import { createAnalyzer } from "./site/analyze.js";
 import { buildSite } from "./site/build.js";
+import { validateByType, validateSocialKit, validateWorkflow, validateSpreadsheet } from "./qa/validator.js";
 import { buildWorkbook, workbookToBuffer, createDefaultWorkbook } from "./spreadsheet.js";
 import { createSocialKit } from "./social-kit.js";
 import { createWorkflow } from "./workflow.js";
@@ -1049,6 +1050,23 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
         [JSON.stringify(revisedData), newVer, id, req.user.id],
       );
       res.json({ projectId: id, newVersion: newVer, instruction });
+    }),
+  );
+
+  // ---------- QA validation ----------
+
+  app.post(
+    "/api/qa/validate",
+    requireUser,
+    handle(async (req, res) => {
+      const { type, data } = req.body || {};
+      if (!type) return res.status(400).json({ error: "type is required." });
+      let result;
+      if (type === "social-kit") result = validateSocialKit(data);
+      else if (type === "workflow") result = validateWorkflow(data);
+      else if (type === "spreadsheet") result = validateSpreadsheet(Buffer.from(data, "base64"));
+      else result = validateByType(type, data);
+      res.json(result);
     }),
   );
 
