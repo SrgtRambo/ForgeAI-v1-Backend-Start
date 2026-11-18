@@ -167,12 +167,21 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }
   };
 
-  app.get("/health", (_req, res) => {
+  app.get("/health", async (_req, res) => {
+    let dbOk = false;
+    try {
+      await db.query("select 1");
+      dbOk = true;
+    } catch (e) {
+      dbOk = false;
+    }
     res.json({
       ok: true,
+      db: dbOk,
       payments: Boolean(stripe),
       freeGeneration: config.allowFreeGeneration,
       jobs: jobs.size,
+      aiProviders: config.aiProviders || [],
     });
   });
 
