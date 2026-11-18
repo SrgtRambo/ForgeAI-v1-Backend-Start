@@ -23,6 +23,7 @@ import { validateByType, validateSocialKit, validateWorkflow, validateSpreadshee
 import { buildWorkbook, workbookToBuffer, createDefaultWorkbook } from "./spreadsheet.js";
 import { createSocialKit } from "./social-kit.js";
 import { createWorkflow } from "./workflow.js";
+import { getProjectTemplates, getProjectTemplate } from "./project-templates.js";
 import { getTemplates, getTemplate } from "./templates.js";
 import { createAppSpec } from "./app-generator.js";
 import { runQA } from "./qa/index.js";
@@ -1531,6 +1532,29 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
       await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
       await db.query(`update notifications set read = true where user_id = $1`, [req.user.id]);
       res.json({ readAll: true });
+    }),
+  );
+
+  // ---------- Project templates ----------
+
+  app.get("/api/project-templates", (_req, res) => {
+    res.json({ templates: getProjectTemplates() });
+  });
+
+  app.post(
+    "/api/projects/from-template",
+    requireUser,
+    handle(async (req, res) => {
+      const { templateId } = req.body || {};
+      const tmpl = getProjectTemplate(templateId);
+      if (!tmpl) return res.status(404).json({ error: "Template not found." });
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const newId = `proj_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+      const row = await db.query(
+        `insert into projects (id, user_id, name, stage, data, type, version) values ($1, $2, $3, $4, $5, $6, 1) returning id, name, stage, data, updated_at, version`,
+        [newId, req.user.id, tmpl.name, tmpl.stage, JSON.stringify(tmpl.data), tmpl.type],
+      );
+      res.status(201).json({ project: row[0] });
     }),
   );
 
