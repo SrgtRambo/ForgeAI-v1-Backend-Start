@@ -18,6 +18,7 @@ import { put as storagePut, get as storageGet, remove as storageRemove } from ".
 import { requireUser } from "./infra/auth.js";
 import { createAnalyzer } from "./site/analyze.js";
 import { buildSite } from "./site/build.js";
+import { buildWorkbook, workbookToBuffer, createDefaultWorkbook } from "./spreadsheet.js";
 import { runQA } from "./qa/index.js";
 import { validateSpec } from "./site/spec.js";
 import { createUnsplashProvider } from "./images/unsplash.js";
@@ -945,6 +946,36 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
       if (!rows[0]) return res.status(404).json({ error: "Shared project not found." });
       if (rows[0].visibility === "private") return res.status(403).json({ error: "This project is private." });
       res.json({ project: rows[0] });
+    }),
+  );
+
+  // ---------- Spreadsheet generation ----------
+
+  app.post(
+    "/api/spreadsheet/generate",
+    requireUser,
+    handle(async (req, res) => {
+      const { name, businessName } = req.body || {};
+      const bn = businessName || name || "Business";
+      const def = createDefaultWorkbook(bn);
+      const wb = await buildWorkbook(def);
+      const buffer = await workbookToBuffer(wb);
+      const storagePath = `${req.user.id}/spreadsheet-${Date.now()}.xlsx`;
+      await storagePut(storagePath, Buffer.from(buffer), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.json({ storagePath, fileName: `${bn.replace(/[^a-z0-9]/gi, "_")}.xlsx`, sheets: def.sheets.map((s) => s.name) });
+    }),
+  );
+
+  app.get(
+    "/api/spreadsheet/download/:key",
+    requireUser,
+    handle(async (req, res) => {
+      const key = decodeURIComponent(req.params.key);
+      const obj = await storageGet(key);
+      if (!obj) return res.status(404).json({ error: "File not found." });
+      res.setHeader("Content-Disposition", `attachment; filename="workbook.xlsx"`);
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.send(obj.buffer);
     }),
   );
 

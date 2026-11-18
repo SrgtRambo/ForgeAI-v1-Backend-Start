@@ -175,6 +175,14 @@ export async function getSharedProject(token: string) {
   return data.project as ApiProject;
 }
 
+export async function generateSpreadsheet(businessName: string) {
+  const res = await apiRequest("/api/spreadsheet/generate", {
+    method: "POST",
+    body: JSON.stringify({ businessName }),
+  });
+  return res.json();
+}
+
 export async function healthCheck() {
   const res = await apiRequest("/health");
   return res.json();
