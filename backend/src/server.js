@@ -1390,6 +1390,27 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Delete account (GDPR) ----------
+
+  app.delete(
+    "/api/users/me",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.user;
+      await ensureUser(id, req.user.name, req.headers["x-replit-user-email"]);
+      // Delete all user data in order
+      await db.query(`delete from project_versions where project_id in (select id from projects where user_id = $1)`, [id]);
+      await db.query(`delete from projects where user_id = $1`, [id]);
+      await db.query(`delete from site_image_assets where brief_id in (select id from site_briefs where user_id = $1)`, [id]);
+      await db.query(`delete from site_briefs where user_id = $1`, [id]);
+      await db.query(`delete from purchases where user_id = $1`, [id]);
+      await db.query(`delete from analysis_usage where user_id = $1`, [id]);
+      await db.query(`delete from audit_log where user_id = $1`, [id]);
+      await db.query(`delete from users where id = $1`, [id]);
+      res.json({ deleted: true });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
