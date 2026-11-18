@@ -1812,6 +1812,26 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Search user's site briefs ----------
+
+  app.get(
+    "/api/site/briefs/search",
+    requireUser,
+    handle(async (req, res) => {
+      const q = req.query.q;
+      if (!q || typeof q !== "string" || q.trim().length < 2) {
+        return res.status(400).json({ error: "Query must be at least 2 characters." });
+      }
+      const rows = await db.query(
+        `select id, created_at, updated_at, spec->'meta'->>'businessName' as business_name from site_briefs
+         where user_id = $1 and (spec->'meta'->>'businessName' ilike $2 or spec->'meta'->>'description' ilike $2)
+         order by updated_at desc limit 20`,
+        [req.user.id, `%${q}%`],
+      );
+      res.json({ results: rows });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
