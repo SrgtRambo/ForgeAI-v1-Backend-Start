@@ -183,6 +183,14 @@ export async function generateSpreadsheet(businessName: string) {
   return res.json();
 }
 
+export async function generateSocialKit(body: { businessName: string; industry?: string; description?: string; tone?: string }) {
+  const res = await apiRequest("/api/social-kit/generate", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  return res.json();
+}
+
 export async function healthCheck() {
   const res = await apiRequest("/health");
   return res.json();

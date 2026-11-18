@@ -20,6 +20,7 @@ import { requireUser } from "./infra/auth.js";
 import { createAnalyzer } from "./site/analyze.js";
 import { buildSite } from "./site/build.js";
 import { buildWorkbook, workbookToBuffer, createDefaultWorkbook } from "./spreadsheet.js";
+import { createSocialKit } from "./social-kit.js";
 import { runQA } from "./qa/index.js";
 import { validateSpec } from "./site/spec.js";
 import { createUnsplashProvider } from "./images/unsplash.js";
@@ -979,6 +980,23 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
       res.setHeader("Content-Disposition", `attachment; filename="workbook.xlsx"`);
       res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
       res.send(obj.buffer);
+    }),
+  );
+
+  // ---------- Social media kit generation ----------
+
+  app.post(
+    "/api/social-kit/generate",
+    requireUser,
+    handle(async (req, res) => {
+      const { businessName, industry, description, tone } = req.body || {};
+      if (!businessName || typeof businessName !== "string") {
+        return res.status(400).json({ error: "businessName is required." });
+      }
+      const kit = createSocialKit({ businessName, industry, description, tone });
+      const storagePath = `${req.user.id}/social-kit-${Date.now()}.json`;
+      await storagePut(storagePath, Buffer.from(JSON.stringify(kit, null, 2)), "application/json");
+      res.json({ kit, storagePath });
     }),
   );
 
