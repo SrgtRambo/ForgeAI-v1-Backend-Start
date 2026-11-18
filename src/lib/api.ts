@@ -259,6 +259,11 @@ export async function duplicateBrief(briefId: string) {
   return data.briefId as string;
 }
 
+export async function getSiteStatus(briefId: string) {
+  const res = await apiRequest(`/api/site/status/${briefId}`);
+  return res.json();
+}
+
 export async function healthCheck() {
   const res = await apiRequest("/health");
   return res.json();

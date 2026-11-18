@@ -1288,6 +1288,51 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Site status (comprehensive) ----------
+
+  app.get(
+    "/api/site/status/:briefId",
+    requireUser,
+    handle(async (req, res) => {
+      const { briefId } = req.params;
+      const briefRows = await db.query(
+        `select id, created_at, updated_at from site_briefs where id = $1 and user_id = $2`,
+        [briefId, req.user.id],
+      );
+      if (!briefRows[0]) return res.status(404).json({ error: "Brief not found." });
+      const purchaseRows = await db.query(
+        `select id, status, progress, progress_message, qa_status, qa_report_key, published_url, published_at, storage_path, file_count, project_name, error from purchases where brief_id = $1 and user_id = $2 order by created_at desc limit 1`,
+        [briefId, req.user.id],
+      );
+      const p = purchaseRows[0] || {};
+      res.json({
+        briefId,
+        createdAt: briefRows[0].created_at,
+        updatedAt: briefRows[0].updated_at,
+        generation: {
+          status: p.status || "none",
+          progress: p.progress || 0,
+          message: p.progress_message || null,
+          error: p.error || null,
+          fileCount: p.file_count || null,
+          projectName: p.project_name || null,
+        },
+        qa: {
+          status: p.qa_status || null,
+          reportKey: p.qa_report_key || null,
+        },
+        publishing: {
+          url: p.published_url || null,
+          publishedAt: p.published_at || null,
+        },
+        download: {
+          available: p.status === "ready" && !!p.storage_path,
+          storagePath: p.storage_path || null,
+        },
+      });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
