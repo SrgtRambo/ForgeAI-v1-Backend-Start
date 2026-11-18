@@ -30,6 +30,8 @@ create table if not exists purchases (
   brief_id uuid references site_briefs(id),
   qa_status text,
   qa_report_key text,
+  published_url text,
+  published_at timestamptz,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -45,6 +47,12 @@ begin
   end if;
   if not exists (select 1 from information_schema.columns where table_name='purchases' and column_name='qa_report_key') then
     alter table purchases add column qa_report_key text;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_name='purchases' and column_name='published_url') then
+    alter table purchases add column published_url text;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_name='purchases' and column_name='published_at') then
+    alter table purchases add column published_at timestamptz;
   end if;
 end $$;
 

@@ -1119,6 +1119,49 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Site publishing ----------
+
+  app.post(
+    "/api/site/publish/:briefId",
+    requireUser,
+    handle(async (req, res) => {
+      const { briefId } = req.params;
+      const rows = await db.query(
+        `select id from site_briefs where id = $1 and user_id = $2`,
+        [briefId, req.user.id],
+      );
+      if (!rows[0]) return res.status(404).json({ error: "Brief not found." });
+
+      // Generate a stable published URL slug
+      const brief = await db.query(`select spec from site_briefs where id = $1`, [briefId]);
+      const spec = brief[0]?.spec || {};
+      const slug = (spec.meta?.businessName || "site").toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40);
+      const publishedUrl = `/sites/${slug}-${briefId.slice(0, 8)}`;
+
+      // Update the latest purchase for this brief
+      await db.query(
+        `update purchases set published_url = $1, published_at = now() where brief_id = $2 and user_id = $3`,
+        [publishedUrl, briefId, req.user.id],
+      );
+
+      res.json({ publishedUrl, briefId });
+    }),
+  );
+
+  app.get(
+    "/api/site/published/:slug",
+    handle(async (req, res) => {
+      const rows = await db.query(
+        `select sb.spec, sb.id from site_briefs sb
+         join purchases p on p.brief_id = sb.id
+         where p.published_url = $1`,
+        [`/sites/${req.params.slug}`],
+      );
+      if (!rows[0]) return res.status(404).json({ error: "Published site not found." });
+      res.json({ briefId: rows[0].id, spec: rows[0].spec });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(

@@ -228,6 +228,11 @@ export async function downloadArtifact(key: string) {
   return res.blob();
 }
 
+export async function publishSite(briefId: string) {
+  const res = await apiRequest(`/api/site/publish/${briefId}`, { method: "POST" });
+  return res.json();
+}
+
 export async function healthCheck() {
   const res = await apiRequest("/health");
   return res.json();
