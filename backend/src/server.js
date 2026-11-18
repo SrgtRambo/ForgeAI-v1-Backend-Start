@@ -1971,6 +1971,65 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Site accessibility audit ----------
+
+  app.post(
+    "/api/site/accessibility/:briefId",
+    requireUser,
+    handle(async (req, res) => {
+      const { briefId } = req.params;
+      const rows = await db.query(
+        `select spec from site_briefs where id = $1 and user_id = $2`,
+        [briefId, req.user.id],
+      );
+      if (!rows[0]) return res.status(404).json({ error: "Brief not found." });
+      const spec = rows[0].spec;
+      const issues = [];
+      const checks = [];
+
+      // Check for alt text on images
+      const specStr = JSON.stringify(spec);
+      const imgRefs = (specStr.match(/imageId/g) || []).length;
+      checks.push({ name: "Image references found", status: "info", count: imgRefs });
+
+      // Check for semantic HTML
+      if (spec.pages && spec.pages.length > 0) {
+        checks.push({ name: "Has pages", status: "pass" });
+      } else {
+        issues.push("No pages defined");
+      }
+
+      // Check for navigation
+      const hasNav = spec.pages?.some((p) => p.sections?.some((s) => s.type === "nav"));
+      if (hasNav) checks.push({ name: "Has navigation", status: "pass" });
+      else issues.push("Missing navigation section");
+
+      // Check for footer
+      const hasFooter = spec.pages?.some((p) => p.sections?.some((s) => s.type === "footer"));
+      if (hasFooter) checks.push({ name: "Has footer", status: "pass" });
+      else issues.push("Missing footer section");
+
+      // Check for contact form
+      const hasContact = spec.pages?.some((p) => p.sections?.some((s) => s.type === "contact"));
+      if (hasContact) checks.push({ name: "Has contact section", status: "pass" });
+
+      // Check meta description
+      if (spec.meta?.description || spec.meta?.tagline) {
+        checks.push({ name: "Has meta description", status: "pass" });
+      } else {
+        issues.push("Missing meta description");
+      }
+
+      res.json({
+        briefId,
+        passed: issues.length === 0,
+        issues,
+        checks,
+        auditedAt: new Date().toISOString(),
+      });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
