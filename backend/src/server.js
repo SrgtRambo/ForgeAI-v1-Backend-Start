@@ -1900,6 +1900,34 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     res.json({ steps, completedCount, totalCount: steps.length, progress: Math.round((completedCount / steps.length) * 100) });
   }));
 
+  // ---------- Site backup (full spec + images) ----------
+
+  app.get(
+    "/api/site/briefs/:id/backup",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.params;
+      const briefRows = await db.query(
+        `select id, input, analysis, spec, created_at, updated_at from site_briefs where id = $1 and user_id = $2`,
+        [id, req.user.id],
+      );
+      if (!briefRows[0]) return res.status(404).json({ error: "Brief not found." });
+      const imageRows = await db.query(
+        `select slot_id, source, storage_key, credit from site_image_assets where brief_id = $1`,
+        [id],
+      );
+      const backup = {
+        brief: briefRows[0],
+        images: imageRows,
+        backedUpAt: new Date().toISOString(),
+        version: "1.0",
+      };
+      res.setHeader("Content-Disposition", `attachment; filename="site-backup-${id.slice(0, 8)}.json"`);
+      res.setHeader("Content-Type", "application/json");
+      res.send(JSON.stringify(backup, null, 2));
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
