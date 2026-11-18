@@ -1,18 +1,42 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 
-// Opening the app goes straight to the Forge AI workspace (sign-in first if needed).
+import { Faq, FinalCta, LandingFooter, Pricing, Testimonials } from "@/components/landing/landing-bottom";
+import { LandingNav } from "@/components/landing/landing-nav";
+import { Examples, Features, Hero, HowItWorks } from "@/components/landing/landing-top";
+
+const TITLE = "Forge AI — Your business website in 60 seconds";
+const DESCRIPTION =
+  "Forge AI analyzes your business, designs a custom website, and delivers a production-ready ZIP. No coding required. 5 free analyses per day.";
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Forge AI" },
-      { name: "description", content: "Forge AI builds the custom software your business is missing." },
-      { property: "og:title", content: "Forge AI" },
-      { property: "og:description", content: "Forge AI builds the custom software your business is missing." },
+      { title: TITLE },
+      { name: "description", content: DESCRIPTION },
+      { property: "og:title", content: TITLE },
+      { property: "og:description", content: DESCRIPTION },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  beforeLoad: () => {
-    throw redirect({ to: "/studio" });
-  },
+  component: LandingPage,
 });
+
+function LandingPage() {
+  return (
+    <div className="landing min-h-screen">
+      <LandingNav />
+      <main>
+        <Hero />
+        <HowItWorks />
+        <Features />
+        <Examples />
+        <Pricing />
+        <Testimonials />
+        <Faq />
+        <FinalCta />
+      </main>
+      <LandingFooter />
+    </div>
+  );
+}
