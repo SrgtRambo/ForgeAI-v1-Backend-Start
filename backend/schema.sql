@@ -101,3 +101,38 @@ create table if not exists analysis_usage (
 );
 
 create index if not exists analysis_usage_user_id_idx on analysis_usage(user_id, day);
+
+-- Project versions: stores snapshots for revision history.
+create table if not exists project_versions (
+  id uuid primary key default gen_random_uuid(),
+  project_id text not null references projects(id) on delete cascade,
+  version_number int not null,
+  name text,
+  stage text,
+  data jsonb not null default '{}',
+  created_at timestamptz default now(),
+  unique (project_id, version_number)
+);
+
+create index if not exists project_versions_project_id_idx on project_versions(project_id);
+create index if not exists project_versions_created_at_idx on project_versions(created_at desc);
+
+-- Add sharing columns to projects if they don't exist.
+do $$
+begin
+  if not exists (select 1 from information_schema.columns where table_name='projects' and column_name='share_token') then
+    alter table projects add column share_token text unique;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_name='projects' and column_name='visibility') then
+    alter table projects add column visibility text not null default 'private' check (visibility in ('private','public','unlisted'));
+  end if;
+  if not exists (select 1 from information_schema.columns where table_name='projects' and column_name='type') then
+    alter table projects add column type text;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_name='projects' and column_name='version') then
+    alter table projects add column version int not null default 1;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_name='projects' and column_name='created_at') then
+    alter table projects add column created_at timestamptz default now();
+  end if;
+end $$;

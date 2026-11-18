@@ -5,6 +5,7 @@ import Stripe from "stripe";
 import multer from "multer";
 import sharp from "sharp";
 import { pathToFileURL } from "node:url";
+import crypto from "node:crypto";
 
 import { loadConfig } from "./config.js";
 import { createJobRunner } from "./jobs.js";
@@ -834,6 +835,116 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
       const rows = await db.query(`delete from projects where id = $1 and user_id = $2 returning id`, [id, req.user.id]);
       if (!rows[0]) return res.status(404).json({ error: "Project not found." });
       res.json({ deleted: true });
+    }),
+  );
+
+  // ---------- Project sharing & versioning ----------
+
+  app.post(
+    "/api/projects/:id/share",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.params;
+      const { visibility } = req.body || {};
+      const vis = visibility === "public" ? "public" : "unlisted";
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const token = crypto.randomUUID().replace(/-/g, "");
+      const rows = await db.query(
+        `update projects set share_token = $1, visibility = $2, updated_at = now()
+         where id = $3 and user_id = $4 returning id, name, share_token, visibility`,
+        [token, vis, id, req.user.id],
+      );
+      if (!rows[0]) return res.status(404).json({ error: "Project not found." });
+      res.json({ project: rows[0], shareUrl: `/share/${token}` });
+    }),
+  );
+
+  app.delete(
+    "/api/projects/:id/share",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.params;
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const rows = await db.query(
+        `update projects set share_token = null, visibility = 'private', updated_at = now()
+         where id = $1 and user_id = $2 returning id`,
+        [id, req.user.id],
+      );
+      if (!rows[0]) return res.status(404).json({ error: "Project not found." });
+      res.json({ revoked: true });
+    }),
+  );
+
+  app.get(
+    "/api/projects/:id/versions",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.params;
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const owner = await db.query(`select id from projects where id = $1 and user_id = $2`, [id, req.user.id]);
+      if (!owner[0]) return res.status(404).json({ error: "Project not found." });
+      const rows = await db.query(
+        `select id, version_number, name, stage, created_at from project_versions where project_id = $1 order by version_number desc`,
+        [id],
+      );
+      res.json({ versions: rows });
+    }),
+  );
+
+  app.post(
+    "/api/projects/:id/versions",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.params;
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const rows = await db.query(
+        `select name, stage, data, version from projects where id = $1 and user_id = $2`,
+        [id, req.user.id],
+      );
+      if (!rows[0]) return res.status(404).json({ error: "Project not found." });
+      const proj = rows[0];
+      const nextVer = (proj.version || 1) + 1;
+      const vrow = await db.query(
+        `insert into project_versions (project_id, version_number, name, stage, data) values ($1, $2, $3, $4, $5) returning id, version_number, created_at`,
+        [id, proj.version || 1, proj.name, proj.stage, JSON.stringify(proj.data)],
+      );
+      await db.query(`update projects set version = $1 where id = $2`, [nextVer, id]);
+      res.status(201).json({ version: vrow[0] });
+    }),
+  );
+
+  app.post(
+    "/api/projects/:id/versions/:version/restore",
+    requireUser,
+    handle(async (req, res) => {
+      const { id, version } = req.params;
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const vrows = await db.query(
+        `select name, stage, data from project_versions where project_id = $1 and version_number = $2`,
+        [id, parseInt(version, 10)],
+      );
+      if (!vrows[0]) return res.status(404).json({ error: "Version not found." });
+      const v = vrows[0];
+      const rows = await db.query(
+        `update projects set name = $1, stage = $2, data = $3, updated_at = now() where id = $4 and user_id = $5 returning id, name, stage, data, updated_at`,
+        [v.name, v.stage, JSON.stringify(v.data), id, req.user.id],
+      );
+      if (!rows[0]) return res.status(404).json({ error: "Project not found." });
+      res.json({ project: rows[0] });
+    }),
+  );
+
+  // Public share view (no auth required)
+  app.get(
+    "/api/share/:token",
+    handle(async (req, res) => {
+      const rows = await db.query(
+        `select id, name, stage, data, visibility, updated_at from projects where share_token = $1`,
+        [req.params.token],
+      );
+      if (!rows[0]) return res.status(404).json({ error: "Shared project not found." });
+      if (rows[0].visibility === "private") return res.status(403).json({ error: "This project is private." });
+      res.json({ project: rows[0] });
     }),
   );
 

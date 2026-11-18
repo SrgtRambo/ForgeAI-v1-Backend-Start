@@ -20,6 +20,11 @@ export interface ApiProject {
   stage: string;
   data: Record<string, unknown>;
   updated_at: string;
+  share_token?: string | null;
+  visibility?: string;
+  type?: string | null;
+  version?: number;
+  created_at?: string;
 }
 
 async function apiRequest(path: string, init?: RequestInit): Promise<Response> {
@@ -131,6 +136,43 @@ export async function analyzeSite(body: {
   });
   const data = await res.json();
   return data;
+}
+
+export async function shareProject(id: string, visibility: "public" | "unlisted" = "unlisted") {
+  const res = await apiRequest(`/api/projects/${id}/share`, {
+    method: "POST",
+    body: JSON.stringify({ visibility }),
+  });
+  const data = await res.json();
+  return data as { project: ApiProject; shareUrl: string };
+}
+
+export async function revokeShare(id: string) {
+  await apiRequest(`/api/projects/${id}/share`, { method: "DELETE" });
+}
+
+export async function listVersions(id: string) {
+  const res = await apiRequest(`/api/projects/${id}/versions`);
+  const data = await res.json();
+  return data.versions as { id: string; version_number: number; name: string; stage: string; created_at: string }[];
+}
+
+export async function saveVersion(id: string) {
+  const res = await apiRequest(`/api/projects/${id}/versions`, { method: "POST" });
+  const data = await res.json();
+  return data.version;
+}
+
+export async function restoreVersion(id: string, version: number) {
+  const res = await apiRequest(`/api/projects/${id}/versions/${version}/restore`, { method: "POST" });
+  const data = await res.json();
+  return data.project as ApiProject;
+}
+
+export async function getSharedProject(token: string) {
+  const res = await apiRequest(`/api/share/${token}`);
+  const data = await res.json();
+  return data.project as ApiProject;
 }
 
 export async function healthCheck() {
