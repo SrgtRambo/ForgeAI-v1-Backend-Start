@@ -1,25 +1,32 @@
 // Testimonials section.
 // Variants: quote-large, cards. Only generated when quotes are supplied.
 
-const space = (d) => ({ compact: '0.85rem', regular: '1rem', airy: '1.25rem' }[d] || '1rem');
-const radius = (r) => ({ sharp: '0.25rem', soft: '0.75rem', round: '1.5rem' }[r] || '0.75rem');
-function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;" }[c])); }
-function sectionId(content) { return `testimonials-${esc((content.sectionId || 'testimonials').toLowerCase().replace(/[^a-z0-9]+/g,'-'))}`; }
+const space = (d) => ({ compact: "0.85rem", regular: "1rem", airy: "1.25rem" })[d] || "1rem";
+const radius = (r) => ({ sharp: "0.25rem", soft: "0.75rem", round: "1.5rem" })[r] || "0.75rem";
+function esc(s) {
+  return String(s ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+  );
+}
+function sectionId(content) {
+  return `testimonials-${esc((content.sectionId || "testimonials").toLowerCase().replace(/[^a-z0-9]+/g, "-"))}`;
+}
 
-export const type = 'testimonials';
+export const type = "testimonials";
 export const variants = {
-  'quote-large': {
+  "quote-large": {
     render(ctx) {
       const { content, density, radius: rad } = ctx;
-      const heading = esc(content.heading || 'What people say');
+      const heading = esc(content.heading || "What people say");
       const quotes = Array.isArray(content.quotes) ? content.quotes : [];
-      if (!quotes.length) return '';
+      if (!quotes.length) return "";
       const id = sectionId(content);
       return `
         <section class="testimonials quote-large" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="${id}-heading">
           <h2 id="${id}-heading">${heading}</h2>
           <div class="testimonials-wrap">
-            ${quotes.map((q) => `<blockquote class="quote"><p>${esc(q.text || q.quote || '')}</p><p class="quote-author">${esc(q.name || '')}${q.role ? `, ${esc(q.role)}` : ''}</p></blockquote>`).join('')}
+            ${quotes.map((q) => `<blockquote class="quote"><p>${esc(q.text || q.quote || "")}</p><p class="quote-author">${esc(q.name || "")}${q.role ? `, ${esc(q.role)}` : ""}</p></blockquote>`).join("")}
           </div>
         </section>
       `;
@@ -37,21 +44,25 @@ export const variants = {
   cards: {
     render(ctx) {
       const { content, density, radius: rad } = ctx;
-      const heading = esc(content.heading || 'What people say');
+      const heading = esc(content.heading || "What people say");
       const quotes = Array.isArray(content.quotes) ? content.quotes : [];
-      if (!quotes.length) return '';
+      if (!quotes.length) return "";
       const id = sectionId(content);
       return `
         <section class="testimonials cards" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="${id}-heading">
           <h2 id="${id}-heading">${heading}</h2>
           <div class="testimonials-grid">
-            ${quotes.map((q) => `
+            ${quotes
+              .map(
+                (q) => `
               <article class="testimonial-card">
-                <p class="testimonial-text">${esc(q.text || q.quote || '')}</p>
-                <p class="testimonial-author">${esc(q.name || '')}</p>
-                ${q.role ? `<p class="testimonial-role">${esc(q.role)}</p>` : ''}
+                <p class="testimonial-text">${esc(q.text || q.quote || "")}</p>
+                <p class="testimonial-author">${esc(q.name || "")}</p>
+                ${q.role ? `<p class="testimonial-role">${esc(q.role)}</p>` : ""}
               </article>
-            `).join('')}
+            `,
+              )
+              .join("")}
           </div>
         </section>
       `;

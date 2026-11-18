@@ -50,7 +50,8 @@ async function authenticate(request: Request) {
 }
 
 function gatewayErrorMessage(status: number) {
-  if (status === 402) return "Forge AI is out of AI credits for this workspace. Add credits, then try again.";
+  if (status === 402)
+    return "Forge AI is out of AI credits for this workspace. Add credits, then try again.";
   if (status === 429) return "Forge AI is busy right now. Wait a minute and try again.";
   if (status === 403) return "Forge AI access is currently blocked for this workspace.";
   if (status >= 500) return "Forge AI had a temporary problem. Try again in a moment.";
@@ -78,12 +79,14 @@ export async function handleForgeChat(request: Request) {
   if (!auth) return json(401, { error: "Sign in to use Forge AI.", status: 401 });
 
   const raw = await request.text();
-  if (raw.length > MAX_BODY_BYTES) return json(413, { error: "Request is too large.", status: 413 });
+  if (raw.length > MAX_BODY_BYTES)
+    return json(413, { error: "Request is too large.", status: 413 });
   let validated;
   try {
     validated = validateForgeChat(JSON.parse(raw));
   } catch (error) {
-    if (error instanceof ForgeRequestError) return json(error.status, { error: error.message, status: error.status });
+    if (error instanceof ForgeRequestError)
+      return json(error.status, { error: error.message, status: error.status });
     return json(400, { error: "Request body must be valid JSON.", status: 400 });
   }
 
@@ -159,7 +162,11 @@ export async function handleForgeChat(request: Request) {
           finalPayload = { error: "The request was cancelled.", status: 499 };
         } else {
           const status = APICallError.isInstance(error) ? (error.statusCode ?? 502) : 502;
-          console.error("[forge-ai] generation failed", status, error instanceof Error ? error.message : error);
+          console.error(
+            "[forge-ai] generation failed",
+            status,
+            error instanceof Error ? error.message : error,
+          );
           finalPayload = { error: gatewayErrorMessage(status), status };
         }
       } finally {

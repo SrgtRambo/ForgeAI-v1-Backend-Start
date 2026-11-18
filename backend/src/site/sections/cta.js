@@ -1,27 +1,34 @@
 // CTA section.
 // Variants: band, card.
 
-const space = (d) => ({ compact: '0.85rem', regular: '1rem', airy: '1.25rem' }[d] || '1rem');
-const radius = (r) => ({ sharp: '0.25rem', soft: '0.75rem', round: '1.5rem' }[r] || '0.75rem');
-function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;" }[c])); }
-function sectionId(content) { return `cta-${esc((content.sectionId || 'cta').toLowerCase().replace(/[^a-z0-9]+/g,'-'))}`; }
+const space = (d) => ({ compact: "0.85rem", regular: "1rem", airy: "1.25rem" })[d] || "1rem";
+const radius = (r) => ({ sharp: "0.25rem", soft: "0.75rem", round: "1.5rem" })[r] || "0.75rem";
+function esc(s) {
+  return String(s ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+  );
+}
+function sectionId(content) {
+  return `cta-${esc((content.sectionId || "cta").toLowerCase().replace(/[^a-z0-9]+/g, "-"))}`;
+}
 
-export const type = 'cta';
+export const type = "cta";
 export const variants = {
   band: {
     render(ctx) {
       const { content, density, radius: rad } = ctx;
-      const heading = esc(content.heading || 'Get started today');
-      const body = esc(content.body || '');
+      const heading = esc(content.heading || "Get started today");
+      const body = esc(content.body || "");
       const id = sectionId(content);
       return `
         <section class="cta band" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="${id}-heading">
           <div class="cta-inner">
             <div class="cta-text">
               <h2 id="${id}-heading">${heading}</h2>
-              ${body ? `<p>${body}</p>` : ''}
+              ${body ? `<p>${body}</p>` : ""}
             </div>
-            ${content.buttonLabel ? `<a href="${esc(content.buttonHref || '#')}" class="btn">${esc(content.buttonLabel)}</a>` : ''}
+            ${content.buttonLabel ? `<a href="${esc(content.buttonHref || "#")}" class="btn">${esc(content.buttonLabel)}</a>` : ""}
           </div>
         </section>
       `;
@@ -39,15 +46,15 @@ export const variants = {
   card: {
     render(ctx) {
       const { content, density, radius: rad } = ctx;
-      const heading = esc(content.heading || 'Get started today');
-      const body = esc(content.body || '');
+      const heading = esc(content.heading || "Get started today");
+      const body = esc(content.body || "");
       const id = sectionId(content);
       return `
         <section class="cta card" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="${id}-heading">
           <div class="cta-card">
             <h2 id="${id}-heading">${heading}</h2>
-            ${body ? `<p>${body}</p>` : ''}
-            ${content.buttonLabel ? `<a href="${esc(content.buttonHref || '#')}" class="btn">${esc(content.buttonLabel)}</a>` : ''}
+            ${body ? `<p>${body}</p>` : ""}
+            ${content.buttonLabel ? `<a href="${esc(content.buttonHref || "#")}" class="btn">${esc(content.buttonLabel)}</a>` : ""}
           </div>
         </section>
       `;

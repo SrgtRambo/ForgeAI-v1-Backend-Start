@@ -1,27 +1,34 @@
 // Hero section.
 // Variants: split-image (text left, image right), full-bleed (image background, text overlay with scrim), editorial (large heading, offset image, stat row).
 
-const space = (d) => ({ compact: '0.85rem', regular: '1rem', airy: '1.25rem' }[d] || '1rem');
-const radius = (r) => ({ sharp: '0.25rem', soft: '0.75rem', round: '1.5rem' }[r] || '0.75rem');
-function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;" }[c])); }
-function imgUrl(ctx, id) { return (ctx.images && ctx.images[id]) || ''; }
+const space = (d) => ({ compact: "0.85rem", regular: "1rem", airy: "1.25rem" })[d] || "1rem";
+const radius = (r) => ({ sharp: "0.25rem", soft: "0.75rem", round: "1.5rem" })[r] || "0.75rem";
+function esc(s) {
+  return String(s ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+  );
+}
+function imgUrl(ctx, id) {
+  return (ctx.images && ctx.images[id]) || "";
+}
 
-export const type = 'hero';
+export const type = "hero";
 export const variants = {
-  'split-image': {
+  "split-image": {
     render(ctx) {
       const { content, palette, density, radius: rad, motion } = ctx;
-      const heading = esc(content.heading || 'Your business, online.');
-      const body = esc(content.body || '');
-      const imageId = content.imageId || '';
+      const heading = esc(content.heading || "Your business, online.");
+      const body = esc(content.body || "");
+      const imageId = content.imageId || "";
       const url = imgUrl(ctx, imageId);
-      const alt = esc(content.imageAlt || '');
+      const alt = esc(content.imageAlt || "");
       const hasImage = Boolean(url && alt);
       return `
         <section class="hero split-image" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="hero-heading">
           <h1 id="hero-heading">${heading}</h1>
-          ${body ? `<p class="hero-body">${body}</p>` : ''}
-          ${hasImage ? `<div class="hero-image"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"></div>` : ''}
+          ${body ? `<p class="hero-body">${body}</p>` : ""}
+          ${hasImage ? `<div class="hero-image"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"></div>` : ""}
         </section>
       `;
     },
@@ -38,21 +45,21 @@ export const variants = {
       }
     `,
   },
-  'full-bleed': {
+  "full-bleed": {
     render(ctx) {
       const { content, palette, density, radius: rad, motion } = ctx;
-      const heading = esc(content.heading || 'Your business, online.');
-      const body = esc(content.body || '');
-      const imageId = content.imageId || '';
+      const heading = esc(content.heading || "Your business, online.");
+      const body = esc(content.body || "");
+      const imageId = content.imageId || "";
       const url = imgUrl(ctx, imageId);
-      const alt = esc(content.imageAlt || '');
+      const alt = esc(content.imageAlt || "");
       const hasImage = Boolean(url && alt);
       return `
         <section class="hero full-bleed" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="hero-heading">
-          ${hasImage ? `<div class="hero-bg"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"></div>` : ''}
+          ${hasImage ? `<div class="hero-bg"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"></div>` : ""}
           <div class="hero-content">
             <h1 id="hero-heading">${heading}</h1>
-            ${body ? `<p class="hero-body">${body}</p>` : ''}
+            ${body ? `<p class="hero-body">${body}</p>` : ""}
           </div>
         </section>
       `;
@@ -70,20 +77,20 @@ export const variants = {
   editorial: {
     render(ctx) {
       const { content, palette, density, radius: rad } = ctx;
-      const heading = esc(content.heading || 'Your business, online.');
-      const body = esc(content.body || '');
-      const stat = esc(content.stat || '');
-      const statLabel = esc(content.statLabel || '');
-      const imageId = content.imageId || '';
+      const heading = esc(content.heading || "Your business, online.");
+      const body = esc(content.body || "");
+      const stat = esc(content.stat || "");
+      const statLabel = esc(content.statLabel || "");
+      const imageId = content.imageId || "";
       const url = imgUrl(ctx, imageId);
-      const alt = esc(content.imageAlt || '');
+      const alt = esc(content.imageAlt || "");
       const hasImage = Boolean(url && alt);
       return `
         <section class="hero editorial" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="hero-heading">
           <h1 id="hero-heading">${heading}</h1>
-          ${body ? `<p class="hero-body">${body}</p>` : ''}
-          ${stat ? `<div class="hero-stat"><strong>${stat}</strong><span>${statLabel}</span></div>` : ''}
-          ${hasImage ? `<div class="hero-image"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"></div>` : ''}
+          ${body ? `<p class="hero-body">${body}</p>` : ""}
+          ${stat ? `<div class="hero-stat"><strong>${stat}</strong><span>${statLabel}</span></div>` : ""}
+          ${hasImage ? `<div class="hero-image"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"></div>` : ""}
         </section>
       `;
     },

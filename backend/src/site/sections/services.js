@@ -1,29 +1,40 @@
 // Services section.
 // Variants: grid-cards, numbered-list, alternating-rows.
 
-const space = (d) => ({ compact: '0.85rem', regular: '1rem', airy: '1.25rem' }[d] || '1rem');
-const radius = (r) => ({ sharp: '0.25rem', soft: '0.75rem', round: '1.5rem' }[r] || '0.75rem');
-function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;" }[c])); }
-function sectionId(content) { return `services-${esc((content.sectionId || 'services').toLowerCase().replace(/[^a-z0-9]+/g,'-'))}`; }
+const space = (d) => ({ compact: "0.85rem", regular: "1rem", airy: "1.25rem" })[d] || "1rem";
+const radius = (r) => ({ sharp: "0.25rem", soft: "0.75rem", round: "1.5rem" })[r] || "0.75rem";
+function esc(s) {
+  return String(s ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+  );
+}
+function sectionId(content) {
+  return `services-${esc((content.sectionId || "services").toLowerCase().replace(/[^a-z0-9]+/g, "-"))}`;
+}
 
-export const type = 'services';
+export const type = "services";
 export const variants = {
-  'grid-cards': {
+  "grid-cards": {
     render(ctx) {
       const { content, density, radius: rad } = ctx;
-      const heading = esc(content.heading || 'Our services');
+      const heading = esc(content.heading || "Our services");
       const items = Array.isArray(content.items) ? content.items : [];
       const id = sectionId(content);
       return `
         <section class="services grid-cards" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="${id}-heading">
           <h2 id="${id}-heading">${heading}</h2>
           <div class="services-grid">
-            ${items.map((item, i) => `
+            ${items
+              .map(
+                (item, i) => `
               <article class="service-card">
-                <h3>${esc(item.heading || item.title || 'Service')}</h3>
-                <p>${esc(item.body || item.description || '')}</p>
+                <h3>${esc(item.heading || item.title || "Service")}</h3>
+                <p>${esc(item.body || item.description || "")}</p>
               </article>
-            `).join('')}
+            `,
+              )
+              .join("")}
           </div>
         </section>
       `;
@@ -38,19 +49,23 @@ export const variants = {
       .service-card p { font-family:var(--font-body); margin:0; font-size:clamp(0.9rem,1vw + 0.3rem,1rem); line-height:1.5; color:var(--ink); }
     `,
   },
-  'numbered-list': {
+  "numbered-list": {
     render(ctx) {
       const { content, density, radius: rad } = ctx;
-      const heading = esc(content.heading || 'Our services');
+      const heading = esc(content.heading || "Our services");
       const items = Array.isArray(content.items) ? content.items : [];
       const id = sectionId(content);
       return `
         <section class="services numbered-list" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="${id}-heading">
           <h2 id="${id}-heading">${heading}</h2>
           <ol class="services-list">
-            ${items.map((item, i) => `
-              <li class="service-item"><span class="num">${i + 1}</span><div><h3>${esc(item.heading || item.title || 'Service')}</h3><p>${esc(item.body || item.description || '')}</p></div></li>
-            `).join('')}
+            ${items
+              .map(
+                (item, i) => `
+              <li class="service-item"><span class="num">${i + 1}</span><div><h3>${esc(item.heading || item.title || "Service")}</h3><p>${esc(item.body || item.description || "")}</p></div></li>
+            `,
+              )
+              .join("")}
           </ol>
         </section>
       `;
@@ -66,24 +81,28 @@ export const variants = {
       .service-item p { font-family:var(--font-body); margin:0; font-size:clamp(0.9rem,1vw + 0.3rem,1rem); line-height:1.5; color:var(--ink); }
     `,
   },
-  'alternating-rows': {
+  "alternating-rows": {
     render(ctx) {
       const { content, density, radius: rad } = ctx;
-      const heading = esc(content.heading || 'Our services');
+      const heading = esc(content.heading || "Our services");
       const items = Array.isArray(content.items) ? content.items : [];
       const id = sectionId(content);
       return `
         <section class="services alternating-rows" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="${id}-heading">
           <h2 id="${id}-heading">${heading}</h2>
           <div class="services-rows">
-            ${items.map((item, i) => `
-              <div class="service-row ${i % 2 === 0 ? 'row-even' : 'row-odd'}">
+            ${items
+              .map(
+                (item, i) => `
+              <div class="service-row ${i % 2 === 0 ? "row-even" : "row-odd"}">
                 <div class="row-text">
-                  <h3>${esc(item.heading || item.title || 'Service')}</h3>
-                  <p>${esc(item.body || item.description || '')}</p>
+                  <h3>${esc(item.heading || item.title || "Service")}</h3>
+                  <p>${esc(item.body || item.description || "")}</p>
                 </div>
               </div>
-            `).join('')}
+            `,
+              )
+              .join("")}
           </div>
         </section>
       `;

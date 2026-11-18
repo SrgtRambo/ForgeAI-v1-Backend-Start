@@ -2,43 +2,65 @@
 // Variant: inline-form (date, time, party or service, name, contact).
 // Submissions save to localStorage and show successMessage.
 
-const space = (d) => ({ compact: '0.85rem', regular: '1rem', airy: '1.25rem' }[d] || '1rem');
-const radius = (r) => ({ sharp: '0.25rem', soft: '0.75rem', round: '1.5rem' }[r] || '0.75rem');
-function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;" }[c])); }
-function sectionId(content) { return `booking-${esc((content.sectionId || 'booking').toLowerCase().replace(/[^a-z0-9]+/g,'-'))}`; }
+const space = (d) => ({ compact: "0.85rem", regular: "1rem", airy: "1.25rem" })[d] || "1rem";
+const radius = (r) => ({ sharp: "0.25rem", soft: "0.75rem", round: "1.5rem" })[r] || "0.75rem";
+function esc(s) {
+  return String(s ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+  );
+}
+function sectionId(content) {
+  return `booking-${esc((content.sectionId || "booking").toLowerCase().replace(/[^a-z0-9]+/g, "-"))}`;
+}
 
-export const type = 'booking';
+export const type = "booking";
 export const variants = {
-  'inline-form': {
+  "inline-form": {
     render(ctx) {
       const { content, density, radius: rad } = ctx;
-      const heading = esc(content.heading || 'Book an appointment');
-      const body = esc(content.body || '');
+      const heading = esc(content.heading || "Book an appointment");
+      const body = esc(content.body || "");
       const form = content.form || {};
       const id = sectionId(content);
       const fields = [
-        { name: 'bookingDate', label: 'Date', type: 'date', required: true },
-        { name: 'bookingTime', label: 'Time', type: 'time', required: true },
-        { name: 'partySize', label: content.partyLabel || 'Party size', type: 'select', required: true, options: ['1','2','3','4','5','6+'] },
-        { name: 'service', label: content.serviceLabel || 'Service', type: 'select', required: false, options: (content.services || []).slice(0, 8) },
-        { name: 'customerName', label: 'Your name', type: 'text', required: true },
-        { name: 'customerContact', label: 'Phone or email', type: 'tel', required: true },
+        { name: "bookingDate", label: "Date", type: "date", required: true },
+        { name: "bookingTime", label: "Time", type: "time", required: true },
+        {
+          name: "partySize",
+          label: content.partyLabel || "Party size",
+          type: "select",
+          required: true,
+          options: ["1", "2", "3", "4", "5", "6+"],
+        },
+        {
+          name: "service",
+          label: content.serviceLabel || "Service",
+          type: "select",
+          required: false,
+          options: (content.services || []).slice(0, 8),
+        },
+        { name: "customerName", label: "Your name", type: "text", required: true },
+        { name: "customerContact", label: "Phone or email", type: "tel", required: true },
       ];
       return `
         <section class="booking inline-form" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="${id}-heading">
           <h2 id="${id}-heading">${heading}</h2>
-          ${body ? `<p class="booking-body">${body}</p>` : ''}
+          ${body ? `<p class="booking-body">${body}</p>` : ""}
           <form id="${id}-form" novalidate>
-            ${fields.map((f) => {
-              const options = f.type === 'select' && Array.isArray(f.options)
-                ? f.options.map((o) => `<option value="${esc(o)}">${esc(o)}</option>`).join('')
-                : '';
-              return `<div class="form-field"><label for="${id}-${f.name}">${esc(f.label)}</label>${f.type === 'select' ? `<select id="${id}-${f.name}" name="${f.name}"${f.required ? ' required' : ''}>${options}</select>` : `<input type="${f.type}" id="${id}-${f.name}" name="${f.name}"${f.required ? ' required' : ''}>`}</div>`;
-            }).join('')}
-            <button type="submit" class="btn">${esc(form.submitLabel || 'Request booking')}</button>
+            ${fields
+              .map((f) => {
+                const options =
+                  f.type === "select" && Array.isArray(f.options)
+                    ? f.options.map((o) => `<option value="${esc(o)}">${esc(o)}</option>`).join("")
+                    : "";
+                return `<div class="form-field"><label for="${id}-${f.name}">${esc(f.label)}</label>${f.type === "select" ? `<select id="${id}-${f.name}" name="${f.name}"${f.required ? " required" : ""}>${options}</select>` : `<input type="${f.type}" id="${id}-${f.name}" name="${f.name}"${f.required ? " required" : ""}>`}</div>`;
+              })
+              .join("")}
+            <button type="submit" class="btn">${esc(form.submitLabel || "Request booking")}</button>
             <p id="${id}-message" class="form-message" role="status" aria-live="polite"></p>
           </form>
-          <p id="${id}-success" class="success-message" hidden>${esc(form.successMessage || 'Thanks! Your booking request has been received.')}</p>
+          <p id="${id}-success" class="success-message" hidden>${esc(form.successMessage || "Thanks! Your booking request has been received.")}</p>
         </section>
       `;
     },

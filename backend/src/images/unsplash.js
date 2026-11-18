@@ -1,12 +1,12 @@
 // Unsplash stock image provider.
 // https://unsplash.com/developers
 
-const ENDPOINT = 'https://api.unsplash.com/search/photos';
+const ENDPOINT = "https://api.unsplash.com/search/photos";
 
 const ORIENTATION_MAP = {
-  landscape: 'landscape',
-  portrait: 'portrait',
-  square: 'squarish',
+  landscape: "landscape",
+  portrait: "portrait",
+  square: "squarish",
 };
 
 export function createUnsplashProvider({ accessKey, timeoutMs = 10_000 }) {
@@ -14,9 +14,10 @@ export function createUnsplashProvider({ accessKey, timeoutMs = 10_000 }) {
 
   async function search({ query, orientation, perPage = 10 }) {
     const url = new URL(ENDPOINT);
-    url.searchParams.set('query', query);
-    url.searchParams.set('per_page', String(perPage));
-    if (ORIENTATION_MAP[orientation]) url.searchParams.set('orientation', ORIENTATION_MAP[orientation]);
+    url.searchParams.set("query", query);
+    url.searchParams.set("per_page", String(perPage));
+    if (ORIENTATION_MAP[orientation])
+      url.searchParams.set("orientation", ORIENTATION_MAP[orientation]);
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -27,7 +28,8 @@ export function createUnsplashProvider({ accessKey, timeoutMs = 10_000 }) {
         signal: controller.signal,
       });
       if (!response.ok) {
-        if (response.status === 429 || response.status >= 500) throw new Error(`Unsplash ${response.status}`);
+        if (response.status === 429 || response.status >= 500)
+          throw new Error(`Unsplash ${response.status}`);
         return [];
       }
       const data = await response.json();

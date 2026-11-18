@@ -1,29 +1,36 @@
 // Navigation section.
 // Variants: split (logo left, links + CTA right), centered (logo above links), minimal (logo + one CTA).
 
-const space = (d) => ({ compact: '0.85rem', regular: '1rem', airy: '1.25rem' }[d] || '1rem');
-const radius = (r) => ({ sharp: '0.25rem', soft: '0.75rem', round: '1.5rem' }[r] || '0.75rem');
+const space = (d) => ({ compact: "0.85rem", regular: "1rem", airy: "1.25rem" })[d] || "1rem";
+const radius = (r) => ({ sharp: "0.25rem", soft: "0.75rem", round: "1.5rem" })[r] || "0.75rem";
 
 function navLinks(ctx) {
   const { content, palette } = ctx;
   const links = Array.isArray(content.links) ? content.links : [];
-  const cta = content.ctaLabel ? `<a href="${content.ctaHref || '#'}" class="nav-cta">${esc(content.ctaLabel)}</a>` : '';
+  const cta = content.ctaLabel
+    ? `<a href="${content.ctaHref || "#"}" class="nav-cta">${esc(content.ctaLabel)}</a>`
+    : "";
   return `
     <nav class="nav-links" aria-label="Primary navigation">
-      ${links.map((l) => `<a href="${esc(l.href || '#')}">${esc(l.label)}</a>`).join('')}
+      ${links.map((l) => `<a href="${esc(l.href || "#")}">${esc(l.label)}</a>`).join("")}
     </nav>
     ${cta}
   `;
 }
 
-function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;" }[c])); }
+function esc(s) {
+  return String(s ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+  );
+}
 
-export const type = 'nav';
+export const type = "nav";
 export const variants = {
   split: {
     render(ctx) {
       const { content, palette, density, radius: rad } = ctx;
-      const brand = esc(content.brand || ctx.content.businessName || 'Forge AI');
+      const brand = esc(content.brand || ctx.content.businessName || "Forge AI");
       return `
         <section class="nav-section split" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="nav-heading">
           <h2 id="nav-heading" class="sr-only">Primary navigation</h2>
@@ -48,7 +55,7 @@ export const variants = {
   centered: {
     render(ctx) {
       const { content, density, radius: rad } = ctx;
-      const brand = esc(content.brand || ctx.content.businessName || 'Forge AI');
+      const brand = esc(content.brand || ctx.content.businessName || "Forge AI");
       return `
         <section class="nav-section centered" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="nav-heading">
           <h2 id="nav-heading" class="sr-only">Primary navigation</h2>
@@ -71,9 +78,9 @@ export const variants = {
   minimal: {
     render(ctx) {
       const { content, density, radius: rad } = ctx;
-      const brand = esc(content.brand || ctx.content.businessName || 'Forge AI');
-      const ctaLabel = esc(content.ctaLabel || 'Contact');
-      const ctaHref = esc(content.ctaHref || '#');
+      const brand = esc(content.brand || ctx.content.businessName || "Forge AI");
+      const ctaLabel = esc(content.ctaLabel || "Contact");
+      const ctaHref = esc(content.ctaHref || "#");
       return `
         <section class="nav-section minimal" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="nav-heading">
           <h2 id="nav-heading" class="sr-only">Primary navigation</h2>

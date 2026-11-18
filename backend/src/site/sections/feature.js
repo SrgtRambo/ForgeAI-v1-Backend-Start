@@ -1,31 +1,40 @@
 // Feature section.
 // Variants: image-left, image-right, stacked.
 
-const space = (d) => ({ compact: '0.85rem', regular: '1rem', airy: '1.25rem' }[d] || '1rem');
-const radius = (r) => ({ sharp: '0.25rem', soft: '0.75rem', round: '1.5rem' }[r] || '0.75rem');
-function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;" }[c])); }
-function imgUrl(ctx, id) { return (ctx.images && ctx.images[id]) || ''; }
-function sectionId(content) { return `feature-${esc((content.sectionId || 'feature').toLowerCase().replace(/[^a-z0-9]+/g,'-'))}`; }
+const space = (d) => ({ compact: "0.85rem", regular: "1rem", airy: "1.25rem" })[d] || "1rem";
+const radius = (r) => ({ sharp: "0.25rem", soft: "0.75rem", round: "1.5rem" })[r] || "0.75rem";
+function esc(s) {
+  return String(s ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+  );
+}
+function imgUrl(ctx, id) {
+  return (ctx.images && ctx.images[id]) || "";
+}
+function sectionId(content) {
+  return `feature-${esc((content.sectionId || "feature").toLowerCase().replace(/[^a-z0-9]+/g, "-"))}`;
+}
 
-export const type = 'feature';
+export const type = "feature";
 export const variants = {
-  'image-left': {
+  "image-left": {
     render(ctx) {
       const { content, density, radius: rad } = ctx;
-      const heading = esc(content.heading || '');
-      const body = esc(content.body || '');
-      const imageId = content.imageId || '';
+      const heading = esc(content.heading || "");
+      const body = esc(content.body || "");
+      const imageId = content.imageId || "";
       const url = imgUrl(ctx, imageId);
-      const alt = esc(content.imageAlt || '');
+      const alt = esc(content.imageAlt || "");
       const hasImage = Boolean(url && alt);
       const id = sectionId(content);
       return `
         <section class="feature image-left" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="${id}-heading">
           <div class="feature-inner">
-            ${hasImage ? `<div class="feature-image"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"></div>` : ''}
+            ${hasImage ? `<div class="feature-image"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"></div>` : ""}
             <div class="feature-text">
               <h2 id="${id}-heading">${heading}</h2>
-              ${body ? `<p>${body}</p>` : ''}
+              ${body ? `<p>${body}</p>` : ""}
             </div>
           </div>
         </section>
@@ -46,14 +55,14 @@ export const variants = {
       }
     `,
   },
-  'image-right': {
+  "image-right": {
     render(ctx) {
       const { content, density, radius: rad } = ctx;
-      const heading = esc(content.heading || '');
-      const body = esc(content.body || '');
-      const imageId = content.imageId || '';
+      const heading = esc(content.heading || "");
+      const body = esc(content.body || "");
+      const imageId = content.imageId || "";
       const url = imgUrl(ctx, imageId);
-      const alt = esc(content.imageAlt || '');
+      const alt = esc(content.imageAlt || "");
       const hasImage = Boolean(url && alt);
       const id = sectionId(content);
       return `
@@ -61,9 +70,9 @@ export const variants = {
           <div class="feature-inner">
             <div class="feature-text">
               <h2 id="${id}-heading">${heading}</h2>
-              ${body ? `<p>${body}</p>` : ''}
+              ${body ? `<p>${body}</p>` : ""}
             </div>
-            ${hasImage ? `<div class="feature-image"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"></div>` : ''}
+            ${hasImage ? `<div class="feature-image"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"></div>` : ""}
           </div>
         </section>
       `;
@@ -86,11 +95,11 @@ export const variants = {
   stacked: {
     render(ctx) {
       const { content, density, radius: rad } = ctx;
-      const heading = esc(content.heading || '');
-      const body = esc(content.body || '');
-      const imageId = content.imageId || '';
+      const heading = esc(content.heading || "");
+      const body = esc(content.body || "");
+      const imageId = content.imageId || "";
       const url = imgUrl(ctx, imageId);
-      const alt = esc(content.imageAlt || '');
+      const alt = esc(content.imageAlt || "");
       const hasImage = Boolean(url && alt);
       const id = sectionId(content);
       return `
@@ -98,9 +107,9 @@ export const variants = {
           <div class="feature-inner">
             <div class="feature-text">
               <h2 id="${id}-heading">${heading}</h2>
-              ${body ? `<p>${body}</p>` : ''}
+              ${body ? `<p>${body}</p>` : ""}
             </div>
-            ${hasImage ? `<div class="feature-image"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"></div>` : ''}
+            ${hasImage ? `<div class="feature-image"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"></div>` : ""}
           </div>
         </section>
       `;

@@ -2,34 +2,57 @@
 // Variants: initial-cards, photo-cards (photo-cards requires photoImageId for each member; falls back to initial-cards).
 // Stock photos are never used as staff portraits — missing photos show initials avatars with "Add your team photos".
 
-const space = (d) => ({ compact: '0.85rem', regular: '1rem', airy: '1.25rem' }[d] || '1rem');
-const radius = (r) => ({ sharp: '0.25rem', soft: '0.75rem', round: '1.5rem' }[r] || '0.75rem');
-function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;" }[c])); }
-function imgUrl(ctx, id) { return (ctx.images && ctx.images[id]) || ''; }
-function initials(name) { return String(name ?? '').split(/\s+/).map((w) => w[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || '?'; }
-function sectionId(content) { return `team-${esc((content.sectionId || 'team').toLowerCase().replace(/[^a-z0-9]+/g,'-'))}`; }
+const space = (d) => ({ compact: "0.85rem", regular: "1rem", airy: "1.25rem" })[d] || "1rem";
+const radius = (r) => ({ sharp: "0.25rem", soft: "0.75rem", round: "1.5rem" })[r] || "0.75rem";
+function esc(s) {
+  return String(s ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+  );
+}
+function imgUrl(ctx, id) {
+  return (ctx.images && ctx.images[id]) || "";
+}
+function initials(name) {
+  return (
+    String(name ?? "")
+      .split(/\s+/)
+      .map((w) => w[0])
+      .filter(Boolean)
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "?"
+  );
+}
+function sectionId(content) {
+  return `team-${esc((content.sectionId || "team").toLowerCase().replace(/[^a-z0-9]+/g, "-"))}`;
+}
 
-export const type = 'team';
+export const type = "team";
 export const variants = {
-  'initial-cards': {
+  "initial-cards": {
     render(ctx) {
       const { content, density, radius: rad } = ctx;
-      const heading = esc(content.heading || 'Meet the team');
+      const heading = esc(content.heading || "Meet the team");
       const members = Array.isArray(content.members) ? content.members : [];
       const id = sectionId(content);
       return `
         <section class="team initial-cards" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="${id}-heading">
           <h2 id="${id}-heading">${heading}</h2>
           <div class="team-grid">
-            ${members.map((m) => `
+            ${members
+              .map(
+                (m) => `
               <article class="team-card">
                 <div class="avatar initials" aria-hidden="true">${initials(m.name)}</div>
-                <h3>${esc(m.name || '')}</h3>
-                <p class="role">${esc(m.role || '')}</p>
-                ${m.bio ? `<p class="bio">${esc(m.bio)}</p>` : ''}
+                <h3>${esc(m.name || "")}</h3>
+                <p class="role">${esc(m.role || "")}</p>
+                ${m.bio ? `<p class="bio">${esc(m.bio)}</p>` : ""}
               </article>
-            `).join('')}
-            ${members.length === 0 ? `<p class="team-note">Add your team photos.</p>` : ''}
+            `,
+              )
+              .join("")}
+            ${members.length === 0 ? `<p class="team-note">Add your team photos.</p>` : ""}
           </div>
         </section>
       `;
@@ -47,33 +70,37 @@ export const variants = {
       .team-note { grid-column:1/-1; text-align:center; color:var(--muted); font-family:var(--font-body); font-size:clamp(0.9rem,1vw + 0.3rem,1rem); }
     `,
   },
-  'photo-cards': {
+  "photo-cards": {
     render(ctx) {
       const { content, images, density, radius: rad } = ctx;
-      const heading = esc(content.heading || 'Meet the team');
+      const heading = esc(content.heading || "Meet the team");
       const members = Array.isArray(content.members) ? content.members : [];
-      const allHavePhotos = members.every((m) => m.photoImageId && images && images[m.photoImageId]);
+      const allHavePhotos = members.every(
+        (m) => m.photoImageId && images && images[m.photoImageId],
+      );
       const id = sectionId(content);
       if (!allHavePhotos) {
         // Fall back to initial-cards when any member lacks a real photo.
-        return variants['initial-cards'].render(ctx);
+        return variants["initial-cards"].render(ctx);
       }
       return `
         <section class="team photo-cards" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="${id}-heading">
           <h2 id="${id}-heading">${heading}</h2>
           <div class="team-grid">
-            ${members.map((m) => {
-              const url = imgUrl(ctx, m.photoImageId);
-              const alt = esc(m.photoAlt || m.name || 'Team member');
-              return `
+            ${members
+              .map((m) => {
+                const url = imgUrl(ctx, m.photoImageId);
+                const alt = esc(m.photoAlt || m.name || "Team member");
+                return `
                 <article class="team-card">
                   <div class="avatar photo"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"></div>
-                  <h3>${esc(m.name || '')}</h3>
-                  <p class="role">${esc(m.role || '')}</p>
-                  ${m.bio ? `<p class="bio">${esc(m.bio)}</p>` : ''}
+                  <h3>${esc(m.name || "")}</h3>
+                  <p class="role">${esc(m.role || "")}</p>
+                  ${m.bio ? `<p class="bio">${esc(m.bio)}</p>` : ""}
                 </article>
               `;
-            }).join('')}
+              })
+              .join("")}
           </div>
         </section>
       `;

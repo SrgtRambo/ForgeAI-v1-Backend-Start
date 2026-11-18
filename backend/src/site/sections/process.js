@@ -1,29 +1,40 @@
 // Process section.
 // Variants: steps-horizontal, steps-vertical.
 
-const space = (d) => ({ compact: '0.85rem', regular: '1rem', airy: '1.25rem' }[d] || '1rem');
-const radius = (r) => ({ sharp: '0.25rem', soft: '0.75rem', round: '1.5rem' }[r] || '0.75rem');
-function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;" }[c])); }
-function sectionId(content) { return `process-${esc((content.sectionId || 'process').toLowerCase().replace(/[^a-z0-9]+/g,'-'))}`; }
+const space = (d) => ({ compact: "0.85rem", regular: "1rem", airy: "1.25rem" })[d] || "1rem";
+const radius = (r) => ({ sharp: "0.25rem", soft: "0.75rem", round: "1.5rem" })[r] || "0.75rem";
+function esc(s) {
+  return String(s ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+  );
+}
+function sectionId(content) {
+  return `process-${esc((content.sectionId || "process").toLowerCase().replace(/[^a-z0-9]+/g, "-"))}`;
+}
 
-export const type = 'process';
+export const type = "process";
 export const variants = {
-  'steps-horizontal': {
+  "steps-horizontal": {
     render(ctx) {
       const { content, density, radius: rad } = ctx;
-      const heading = esc(content.heading || 'How it works');
+      const heading = esc(content.heading || "How it works");
       const steps = Array.isArray(content.steps) ? content.steps : [];
       const id = sectionId(content);
       return `
         <section class="process steps-horizontal" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="${id}-heading">
           <h2 id="${id}-heading">${heading}</h2>
           <ol class="steps">
-            ${steps.map((step, i) => `
+            ${steps
+              .map(
+                (step, i) => `
               <li class="step">
                 <span class="step-num">${i + 1}</span>
-                <div class="step-text"><h3>${esc(step.heading || step.title || `Step ${i + 1}`)}</h3><p>${esc(step.body || step.description || '')}</p></div>
+                <div class="step-text"><h3>${esc(step.heading || step.title || `Step ${i + 1}`)}</h3><p>${esc(step.body || step.description || "")}</p></div>
               </li>
-            `).join('')}
+            `,
+              )
+              .join("")}
           </ol>
         </section>
       `;
@@ -39,22 +50,26 @@ export const variants = {
       .step p { font-family:var(--font-body); margin:0; font-size:clamp(0.9rem,1vw + 0.3rem,1rem); line-height:1.5; color:var(--ink); }
     `,
   },
-  'steps-vertical': {
+  "steps-vertical": {
     render(ctx) {
       const { content, density, radius: rad } = ctx;
-      const heading = esc(content.heading || 'How it works');
+      const heading = esc(content.heading || "How it works");
       const steps = Array.isArray(content.steps) ? content.steps : [];
       const id = sectionId(content);
       return `
         <section class="process steps-vertical" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="${id}-heading">
           <h2 id="${id}-heading">${heading}</h2>
           <ol class="steps-vert">
-            ${steps.map((step, i) => `
+            ${steps
+              .map(
+                (step, i) => `
               <li class="step-vert">
                 <span class="step-num">${i + 1}</span>
-                <div class="step-text"><h3>${esc(step.heading || step.title || `Step ${i + 1}`)}</h3><p>${esc(step.body || step.description || '')}</p></div>
+                <div class="step-text"><h3>${esc(step.heading || step.title || `Step ${i + 1}`)}</h3><p>${esc(step.body || step.description || "")}</p></div>
               </li>
-            `).join('')}
+            `,
+              )
+              .join("")}
           </ol>
         </section>
       `;

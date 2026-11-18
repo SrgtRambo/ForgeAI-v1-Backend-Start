@@ -1,31 +1,42 @@
 // Menu section (restaurant only).
 // Variants: categories-tabs, two-column-list.
 
-const space = (d) => ({ compact: '0.85rem', regular: '1rem', airy: '1.25rem' }[d] || '1rem');
-const radius = (r) => ({ sharp: '0.25rem', soft: '0.75rem', round: '1.5rem' }[r] || '0.75rem');
-function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;" }[c])); }
-function sectionId(content) { return `menu-${esc((content.sectionId || 'menu').toLowerCase().replace(/[^a-z0-9]+/g,'-'))}`; }
+const space = (d) => ({ compact: "0.85rem", regular: "1rem", airy: "1.25rem" })[d] || "1rem";
+const radius = (r) => ({ sharp: "0.25rem", soft: "0.75rem", round: "1.5rem" })[r] || "0.75rem";
+function esc(s) {
+  return String(s ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+  );
+}
+function sectionId(content) {
+  return `menu-${esc((content.sectionId || "menu").toLowerCase().replace(/[^a-z0-9]+/g, "-"))}`;
+}
 
-export const type = 'menu';
+export const type = "menu";
 export const variants = {
-  'categories-tabs': {
+  "categories-tabs": {
     render(ctx) {
       const { content, density, radius: rad } = ctx;
-      const heading = esc(content.heading || 'Menu');
+      const heading = esc(content.heading || "Menu");
       const categories = Array.isArray(content.categories) ? content.categories : [];
       const id = sectionId(content);
       return `
         <section class="menu categories-tabs" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="${id}-heading">
           <h2 id="${id}-heading">${heading}</h2>
           <div class="menu-categories">
-            ${categories.map((cat) => `
+            ${categories
+              .map(
+                (cat) => `
               <div class="menu-category">
-                <h3>${esc(cat.label || '')}</h3>
+                <h3>${esc(cat.label || "")}</h3>
                 <ul class="menu-items">
-                  ${Array.isArray(cat.items) ? cat.items.map((it) => `<li><span>${esc(it.name || '')}</span><span>${esc(it.price || '')}</span><p>${esc(it.description || '')}</p></li>`).join('') : ''}
+                  ${Array.isArray(cat.items) ? cat.items.map((it) => `<li><span>${esc(it.name || "")}</span><span>${esc(it.price || "")}</span><p>${esc(it.description || "")}</p></li>`).join("") : ""}
                 </ul>
               </div>
-            `).join('')}
+            `,
+              )
+              .join("")}
           </div>
         </section>
       `;
@@ -42,19 +53,23 @@ export const variants = {
       .menu-items li:last-child { border-bottom:none; }
     `,
   },
-  'two-column-list': {
+  "two-column-list": {
     render(ctx) {
       const { content, density, radius: rad } = ctx;
-      const heading = esc(content.heading || 'Menu');
+      const heading = esc(content.heading || "Menu");
       const items = Array.isArray(content.items) ? content.items : [];
       const id = sectionId(content);
       return `
         <section class="menu two-column-list" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="${id}-heading">
           <h2 id="${id}-heading">${heading}</h2>
           <ul class="menu-list">
-            ${items.map((it) => `
-              <li class="menu-item"><span class="item-name">${esc(it.name || '')}</span><span class="item-price">${esc(it.price || '')}</span><p>${esc(it.description || '')}</p></li>
-            `).join('')}
+            ${items
+              .map(
+                (it) => `
+              <li class="menu-item"><span class="item-name">${esc(it.name || "")}</span><span class="item-price">${esc(it.price || "")}</span><p>${esc(it.description || "")}</p></li>
+            `,
+              )
+              .join("")}
           </ul>
         </section>
       `;

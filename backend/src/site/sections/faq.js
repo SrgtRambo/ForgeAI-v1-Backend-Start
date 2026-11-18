@@ -1,33 +1,44 @@
 // FAQ section.
 // Variant: accordion.
 
-const space = (d) => ({ compact: '0.85rem', regular: '1rem', airy: '1.25rem' }[d] || '1rem');
-const radius = (r) => ({ sharp: '0.25rem', soft: '0.75rem', round: '1.5rem' }[r] || '0.75rem');
-function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;" }[c])); }
-function sectionId(content) { return `faq-${esc((content.sectionId || 'faq').toLowerCase().replace(/[^a-z0-9]+/g,'-'))}`; }
+const space = (d) => ({ compact: "0.85rem", regular: "1rem", airy: "1.25rem" })[d] || "1rem";
+const radius = (r) => ({ sharp: "0.25rem", soft: "0.75rem", round: "1.5rem" })[r] || "0.75rem";
+function esc(s) {
+  return String(s ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+  );
+}
+function sectionId(content) {
+  return `faq-${esc((content.sectionId || "faq").toLowerCase().replace(/[^a-z0-9]+/g, "-"))}`;
+}
 
-export const type = 'faq';
+export const type = "faq";
 export const variants = {
   accordion: {
     render(ctx) {
       const { content, density, radius: rad } = ctx;
-      const heading = esc(content.heading || 'Frequently asked questions');
+      const heading = esc(content.heading || "Frequently asked questions");
       const items = Array.isArray(content.items) ? content.items : [];
       const id = sectionId(content);
       return `
         <section class="faq accordion" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="${id}-heading">
           <h2 id="${id}-heading">${heading}</h2>
           <div class="faq-wrap">
-            ${items.map((item, i) => `
+            ${items
+              .map(
+                (item, i) => `
               <div class="faq-item">
                 <button type="button" class="faq-question" id="faq-q-${i}" aria-controls="faq-a-${i}" aria-expanded="false">
-                  ${esc(item.question || '')}
+                  ${esc(item.question || "")}
                 </button>
                 <div id="faq-a-${i}" class="faq-answer" hidden>
-                  <p>${esc(item.answer || '')}</p>
+                  <p>${esc(item.answer || "")}</p>
                 </div>
               </div>
-            `).join('')}
+            `,
+              )
+              .join("")}
           </div>
         </section>
       `;

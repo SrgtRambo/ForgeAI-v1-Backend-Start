@@ -85,9 +85,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Forge AI — custom software for your business" },
-      { name: "description", content: "Forge AI turns your business requirements into custom software." },
+      {
+        name: "description",
+        content: "Forge AI turns your business requirements into custom software.",
+      },
       { property: "og:title", content: "Forge AI — custom software for your business" },
-      { property: "og:description", content: "Forge AI turns your business requirements into custom software." },
+      {
+        property: "og:description",
+        content: "Forge AI turns your business requirements into custom software.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

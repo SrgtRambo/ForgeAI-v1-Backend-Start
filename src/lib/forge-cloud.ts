@@ -58,7 +58,9 @@ export function createForgeCloud(
     }
     const removed = [...saved.keys()].filter((id) => !seen.has(id));
     for (const row of upserts) {
-      const { error } = await supabase.from("forge_projects").upsert(row, { onConflict: "user_id,project_id" });
+      const { error } = await supabase
+        .from("forge_projects")
+        .upsert(row, { onConflict: "user_id,project_id" });
       if (error) throw error;
       saved.set(row.project_id, JSON.stringify(row.data));
     }

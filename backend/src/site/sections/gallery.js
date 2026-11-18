@@ -1,29 +1,40 @@
 // Gallery section.
 // Variants: masonry, grid.
 
-const space = (d) => ({ compact: '0.85rem', regular: '1rem', airy: '1.25rem' }[d] || '1rem');
-const radius = (r) => ({ sharp: '0.25rem', soft: '0.75rem', round: '1.5rem' }[r] || '0.75rem');
-function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;" }[c])); }
-function imgUrl(ctx, id) { return (ctx.images && ctx.images[id]) || ''; }
-function sectionId(content) { return `gallery-${esc((content.sectionId || 'gallery').toLowerCase().replace(/[^a-z0-9]+/g,'-'))}`; }
+const space = (d) => ({ compact: "0.85rem", regular: "1rem", airy: "1.25rem" })[d] || "1rem";
+const radius = (r) => ({ sharp: "0.25rem", soft: "0.75rem", round: "1.5rem" })[r] || "0.75rem";
+function esc(s) {
+  return String(s ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+  );
+}
+function imgUrl(ctx, id) {
+  return (ctx.images && ctx.images[id]) || "";
+}
+function sectionId(content) {
+  return `gallery-${esc((content.sectionId || "gallery").toLowerCase().replace(/[^a-z0-9]+/g, "-"))}`;
+}
 
-export const type = 'gallery';
+export const type = "gallery";
 export const variants = {
   masonry: {
     render(ctx) {
       const { content, images, density, radius: rad } = ctx;
-      const heading = esc(content.heading || 'Gallery');
+      const heading = esc(content.heading || "Gallery");
       const items = Array.isArray(content.items) ? content.items : [];
       const id = sectionId(content);
       return `
         <section class="gallery masonry" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="${id}-heading">
           <h2 id="${id}-heading">${heading}</h2>
           <div class="gallery-masonry">
-            ${items.map((item) => {
-              const url = imgUrl(ctx, item.imageId);
-              const alt = esc(item.alt || '');
-              return `<figure class="gallery-item"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"><figcaption>${esc(item.caption || '')}</figcaption></figure>`;
-            }).join('')}
+            ${items
+              .map((item) => {
+                const url = imgUrl(ctx, item.imageId);
+                const alt = esc(item.alt || "");
+                return `<figure class="gallery-item"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"><figcaption>${esc(item.caption || "")}</figcaption></figure>`;
+              })
+              .join("")}
           </div>
         </section>
       `;
@@ -42,18 +53,20 @@ export const variants = {
   grid: {
     render(ctx) {
       const { content, images, density, radius: rad } = ctx;
-      const heading = esc(content.heading || 'Gallery');
+      const heading = esc(content.heading || "Gallery");
       const items = Array.isArray(content.items) ? content.items : [];
       const id = sectionId(content);
       return `
         <section class="gallery grid" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="${id}-heading">
           <h2 id="${id}-heading">${heading}</h2>
           <div class="gallery-grid">
-            ${items.map((item) => {
-              const url = imgUrl(ctx, item.imageId);
-              const alt = esc(item.alt || '');
-              return `<figure class="gallery-item"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"><figcaption>${esc(item.caption || '')}</figcaption></figure>`;
-            }).join('')}
+            ${items
+              .map((item) => {
+                const url = imgUrl(ctx, item.imageId);
+                const alt = esc(item.alt || "");
+                return `<figure class="gallery-item"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"><figcaption>${esc(item.caption || "")}</figcaption></figure>`;
+              })
+              .join("")}
           </div>
         </section>
       `;

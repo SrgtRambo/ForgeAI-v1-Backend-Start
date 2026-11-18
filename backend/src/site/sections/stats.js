@@ -1,30 +1,41 @@
 // Stats section.
 // Variants: row, band. Only generated when numbers are supplied.
 
-const space = (d) => ({ compact: '0.85rem', regular: '1rem', airy: '1.25rem' }[d] || '1rem');
-const radius = (r) => ({ sharp: '0.25rem', soft: '0.75rem', round: '1.5rem' }[r] || '0.75rem');
-function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;" }[c])); }
-function sectionId(content) { return `stats-${esc((content.sectionId || 'stats').toLowerCase().replace(/[^a-z0-9]+/g,'-'))}`; }
+const space = (d) => ({ compact: "0.85rem", regular: "1rem", airy: "1.25rem" })[d] || "1rem";
+const radius = (r) => ({ sharp: "0.25rem", soft: "0.75rem", round: "1.5rem" })[r] || "0.75rem";
+function esc(s) {
+  return String(s ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+  );
+}
+function sectionId(content) {
+  return `stats-${esc((content.sectionId || "stats").toLowerCase().replace(/[^a-z0-9]+/g, "-"))}`;
+}
 
-export const type = 'stats';
+export const type = "stats";
 export const variants = {
   row: {
     render(ctx) {
       const { content, density, radius: rad } = ctx;
-      const heading = esc(content.heading || 'By the numbers');
+      const heading = esc(content.heading || "By the numbers");
       const items = Array.isArray(content.items) ? content.items : [];
-      if (!items.length) return '';
+      if (!items.length) return "";
       const id = sectionId(content);
       return `
         <section class="stats row" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="${id}-heading">
           <h2 id="${id}-heading">${heading}</h2>
           <div class="stats-row">
-            ${items.map((item) => `
+            ${items
+              .map(
+                (item) => `
               <div class="stat-item">
-                <div class="stat-value">${esc(item.value || item.number || '')}</div>
-                <div class="stat-label">${esc(item.label || '')}</div>
+                <div class="stat-value">${esc(item.value || item.number || "")}</div>
+                <div class="stat-label">${esc(item.label || "")}</div>
               </div>
-            `).join('')}
+            `,
+              )
+              .join("")}
           </div>
         </section>
       `;
@@ -42,20 +53,24 @@ export const variants = {
   band: {
     render(ctx) {
       const { content, density, radius: rad } = ctx;
-      const heading = esc(content.heading || 'By the numbers');
+      const heading = esc(content.heading || "By the numbers");
       const items = Array.isArray(content.items) ? content.items : [];
-      if (!items.length) return '';
+      if (!items.length) return "";
       const id = sectionId(content);
       return `
         <section class="stats band" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="${id}-heading">
           <h2 id="${id}-heading">${heading}</h2>
           <div class="stats-band">
-            ${items.map((item) => `
+            ${items
+              .map(
+                (item) => `
               <div class="stat-item">
-                <div class="stat-value">${esc(item.value || item.number || '')}</div>
-                <div class="stat-label">${esc(item.label || '')}</div>
+                <div class="stat-value">${esc(item.value || item.number || "")}</div>
+                <div class="stat-label">${esc(item.label || "")}</div>
               </div>
-            `).join('')}
+            `,
+              )
+              .join("")}
           </div>
         </section>
       `;

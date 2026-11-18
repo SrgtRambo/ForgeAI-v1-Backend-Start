@@ -1,18 +1,25 @@
 // Footer section.
 // Variants: columns, minimal.
 
-const space = (d) => ({ compact: '0.85rem', regular: '1rem', airy: '1.25rem' }[d] || '1rem');
-const radius = (r) => ({ sharp: '0.25rem', soft: '0.75rem', round: '1.5rem' }[r] || '0.75rem');
-function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;" }[c])); }
-function sectionId(content) { return `footer-${esc((content.sectionId || 'footer').toLowerCase().replace(/[^a-z0-9]+/g,'-'))}`; }
+const space = (d) => ({ compact: "0.85rem", regular: "1rem", airy: "1.25rem" })[d] || "1rem";
+const radius = (r) => ({ sharp: "0.25rem", soft: "0.75rem", round: "1.5rem" })[r] || "0.75rem";
+function esc(s) {
+  return String(s ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+  );
+}
+function sectionId(content) {
+  return `footer-${esc((content.sectionId || "footer").toLowerCase().replace(/[^a-z0-9]+/g, "-"))}`;
+}
 
-export const type = 'footer';
+export const type = "footer";
 export const variants = {
   columns: {
     render(ctx) {
       const { content, density, radius: rad } = ctx;
-      const brand = esc(content.brand || ctx.content.businessName || 'Forge AI');
-      const notice = esc(content.notice || '');
+      const brand = esc(content.brand || ctx.content.businessName || "Forge AI");
+      const notice = esc(content.notice || "");
       const links = Array.isArray(content.links) ? content.links : [];
       const id = sectionId(content);
       return `
@@ -20,8 +27,8 @@ export const variants = {
           <h2 id="${id}-heading" class="sr-only">Footer</h2>
           <div class="footer-inner">
             <div class="footer-brand">${brand}</div>
-            ${links.length ? `<nav class="footer-links" aria-label="Footer links"><ul>${links.map((l) => `<li><a href="${esc(l.href || '#')}">${esc(l.label)}</a></li>`).join('')}</ul></nav>` : ''}
-            ${notice ? `<div class="footer-notice">${notice}</div>` : ''}
+            ${links.length ? `<nav class="footer-links" aria-label="Footer links"><ul>${links.map((l) => `<li><a href="${esc(l.href || "#")}">${esc(l.label)}</a></li>`).join("")}</ul></nav>` : ""}
+            ${notice ? `<div class="footer-notice">${notice}</div>` : ""}
           </div>
         </footer>
       `;
@@ -44,15 +51,15 @@ export const variants = {
   minimal: {
     render(ctx) {
       const { content, density, radius: rad } = ctx;
-      const brand = esc(content.brand || ctx.content.businessName || 'Forge AI');
-      const notice = esc(content.notice || '');
+      const brand = esc(content.brand || ctx.content.businessName || "Forge AI");
+      const notice = esc(content.notice || "");
       const id = sectionId(content);
       return `
         <footer class="footer minimal" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="${id}-heading">
           <h2 id="${id}-heading" class="sr-only">Footer</h2>
           <div class="footer-inner minimal-inner">
             <div class="footer-brand">${brand}</div>
-            ${notice ? `<div class="footer-notice">${notice}</div>` : ''}
+            ${notice ? `<div class="footer-notice">${notice}</div>` : ""}
           </div>
         </footer>
       `;

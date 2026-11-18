@@ -1,6 +1,6 @@
 // Minimal OpenRouter chat client with timeouts and retries on transient failures.
 
-const ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
+const ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
 const RETRYABLE = new Set([408, 409, 425, 429, 500, 502, 503, 504]);
 
 export class ModelError extends Error {
@@ -12,7 +12,13 @@ export class ModelError extends Error {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-export function createOpenRouterChat({ apiKey, referer = 'https://forgeai.app', title = 'Forge AI', timeoutMs = 180_000, retries = 3 }) {
+export function createOpenRouterChat({
+  apiKey,
+  referer = "https://forgeai.app",
+  title = "Forge AI",
+  timeoutMs = 180_000,
+  retries = 3,
+}) {
   return async function chat({ model, messages, maxTokens, json = false, temperature = 0.4 }) {
     let lastError;
     for (let attempt = 0; attempt <= retries; attempt++) {
@@ -20,19 +26,19 @@ export function createOpenRouterChat({ apiKey, referer = 'https://forgeai.app', 
       let response;
       try {
         response = await fetch(ENDPOINT, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             Authorization: `Bearer ${apiKey}`,
-            'HTTP-Referer': referer,
-            'X-Title': title,
+            "HTTP-Referer": referer,
+            "X-Title": title,
           },
           body: JSON.stringify({
             model,
             messages,
             max_tokens: maxTokens,
             temperature,
-            ...(json ? { response_format: { type: 'json_object' } } : {}),
+            ...(json ? { response_format: { type: "json_object" } } : {}),
           }),
           signal: AbortSignal.timeout(timeoutMs),
         });
@@ -41,23 +47,29 @@ export function createOpenRouterChat({ apiKey, referer = 'https://forgeai.app', 
         continue;
       }
       if (!response.ok) {
-        const detail = (await response.text().catch(() => '')).slice(0, 300);
-        lastError = new ModelError(`OpenRouter returned ${response.status}: ${detail}`, response.status);
+        const detail = (await response.text().catch(() => "")).slice(0, 300);
+        lastError = new ModelError(
+          `OpenRouter returned ${response.status}: ${detail}`,
+          response.status,
+        );
         if (RETRYABLE.has(response.status)) continue;
         throw lastError;
       }
       const data = await response.json();
       if (data?.error) {
-        lastError = new ModelError(`OpenRouter error: ${data.error.message ?? 'unknown'}`, data.error.code ?? 502);
+        lastError = new ModelError(
+          `OpenRouter error: ${data.error.message ?? "unknown"}`,
+          data.error.code ?? 502,
+        );
         continue;
       }
       const choice = data?.choices?.[0];
       const content = choice?.message?.content;
-      if (typeof content !== 'string') {
-        lastError = new ModelError('OpenRouter returned an empty reply.', 502);
+      if (typeof content !== "string") {
+        lastError = new ModelError("OpenRouter returned an empty reply.", 502);
         continue;
       }
-      return { content, finishReason: choice.finish_reason ?? 'stop' };
+      return { content, finishReason: choice.finish_reason ?? "stop" };
     }
     throw lastError;
   };

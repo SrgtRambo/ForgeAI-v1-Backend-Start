@@ -1,45 +1,49 @@
 // Forge AI backend: Stripe checkout -> webhook marks purchase paid -> background job generates,
 // zips and stores the project -> the signed-in customer downloads it.
-import express from 'express';
-import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
-import { pathToFileURL } from 'node:url';
+import express from "express";
+import Stripe from "stripe";
+import { createClient } from "@supabase/supabase-js";
+import { pathToFileURL } from "node:url";
 
-import { loadConfig } from './config.js';
-import { createJobRunner } from './jobs.js';
-import { createOpenRouterChat } from './openrouter.js';
-import { OrderError, validateOrder } from './orders.js';
-import { ARCHETYPES } from './archetypes.js';
-import { TIERS } from './pricing.js';
+import { loadConfig } from "./config.js";
+import { createJobRunner } from "./jobs.js";
+import { createOpenRouterChat } from "./openrouter.js";
+import { OrderError, validateOrder } from "./orders.js";
+import { ARCHETYPES } from "./archetypes.js";
+import { TIERS } from "./pricing.js";
 
 const PURCHASE_FIELDS =
-  'id, type, tier, prompt, amount_cents, status, progress, progress_message, project_name, file_count, error, license_key, created_at, updated_at';
+  "id, type, tier, prompt, amount_cents, status, progress, progress_message, project_name, file_count, error, license_key, created_at, updated_at";
 
 export function createApp({ config, db, stripe, jobs }) {
   const app = express();
-  app.disable('x-powered-by');
+  app.disable("x-powered-by");
 
   app.use((req, res, next) => {
     const origin = req.headers.origin;
     if (origin && config.corsOrigins.includes(origin)) {
-      res.setHeader('Access-Control-Allow-Origin', origin);
-      res.setHeader('Vary', 'Origin');
-      res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
-      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Vary", "Origin");
+      res.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
+      res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     }
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('Cache-Control', 'no-store');
-    if (req.method === 'OPTIONS') return res.sendStatus(204);
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Cache-Control", "no-store");
+    if (req.method === "OPTIONS") return res.sendStatus(204);
     next();
   });
 
   // Stripe signs the exact raw bytes, so this route must run before express.json().
-  const rawJson = express.raw({ type: 'application/json', limit: '1mb' });
+  const rawJson = express.raw({ type: "application/json", limit: "1mb" });
   const handleStripeWebhook = async (req, res) => {
-    if (!stripe) return res.status(503).json({ error: 'Payments are not configured.' });
+    if (!stripe) return res.status(503).json({ error: "Payments are not configured." });
     let event;
     try {
-      event = stripe.webhooks.constructEvent(req.body, req.headers['stripe-signature'], config.stripeWebhookSecret);
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        req.headers["stripe-signature"],
+        config.stripeWebhookSecret,
+      );
     } catch (err) {
       return res.status(400).json({ error: `Webhook signature check failed: ${err.message}` });
     }
@@ -48,40 +52,46 @@ export function createApp({ config, db, stripe, jobs }) {
       const purchaseId = session?.metadata?.purchase_id;
       if (
         purchaseId &&
-        (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') &&
-        session.payment_status === 'paid'
+        (event.type === "checkout.session.completed" ||
+          event.type === "checkout.session.async_payment_succeeded") &&
+        session.payment_status === "paid"
       ) {
         // Conditional update makes Stripe's retries harmless: only the first one queues work.
         const { data } = await db
-          .from('purchases')
-          .update({ status: 'queued', progress_message: 'Payment received' })
-          .eq('id', purchaseId)
-          .eq('status', 'pending')
-          .select('id')
+          .from("purchases")
+          .update({ status: "queued", progress_message: "Payment received" })
+          .eq("id", purchaseId)
+          .eq("status", "pending")
+          .select("id")
           .maybeSingle();
         if (data) jobs.enqueue(data.id);
-      } else if (purchaseId && event.type === 'checkout.session.expired') {
-        await db.from('purchases').update({ status: 'cancelled' }).eq('id', purchaseId).eq('status', 'pending');
+      } else if (purchaseId && event.type === "checkout.session.expired") {
+        await db
+          .from("purchases")
+          .update({ status: "cancelled" })
+          .eq("id", purchaseId)
+          .eq("status", "pending");
       }
       // Respond right away; generation runs in the background.
       res.json({ received: true });
     } catch (err) {
-      console.error('[webhook] failed', err);
-      res.status(500).json({ error: 'Webhook processing failed.' });
+      console.error("[webhook] failed", err);
+      res.status(500).json({ error: "Webhook processing failed." });
     }
   };
 
-  app.post('/api/stripe/webhook', rawJson, handleStripeWebhook);
-  app.post('/webhook', rawJson, handleStripeWebhook);
+  app.post("/api/stripe/webhook", rawJson, handleStripeWebhook);
+  app.post("/webhook", rawJson, handleStripeWebhook);
 
-  app.use(express.json({ limit: '64kb' }));
+  app.use(express.json({ limit: "64kb" }));
 
   const requireUser = async (req, res, next) => {
-    const header = req.headers.authorization ?? '';
-    const token = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
-    if (!token) return res.status(401).json({ error: 'Sign in first.' });
+    const header = req.headers.authorization ?? "";
+    const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
+    if (!token) return res.status(401).json({ error: "Sign in first." });
     const { data, error } = await db.auth.getUser(token);
-    if (error || !data?.user) return res.status(401).json({ error: 'Your session expired. Sign in again.' });
+    if (error || !data?.user)
+      return res.status(401).json({ error: "Your session expired. Sign in again." });
     req.user = data.user;
     next();
   };
@@ -91,30 +101,40 @@ export function createApp({ config, db, stripe, jobs }) {
       await fn(req, res);
     } catch (err) {
       if (err instanceof OrderError) return res.status(err.status).json({ error: err.message });
-      console.error('[api]', err);
-      res.status(500).json({ error: 'Something went wrong. Try again.' });
+      console.error("[api]", err);
+      res.status(500).json({ error: "Something went wrong. Try again." });
     }
   };
 
-  app.get('/health', (_req, res) => {
-    res.json({ ok: true, payments: Boolean(stripe), freeGeneration: config.allowFreeGeneration, jobs: jobs.size });
+  app.get("/health", (_req, res) => {
+    res.json({
+      ok: true,
+      payments: Boolean(stripe),
+      freeGeneration: config.allowFreeGeneration,
+      jobs: jobs.size,
+    });
   });
 
-  app.get('/api/catalog', (_req, res) => {
+  app.get("/api/catalog", (_req, res) => {
     res.json({
       types: Object.entries(ARCHETYPES).map(([id, a]) => ({ id, label: a.label })),
-      tiers: Object.entries(TIERS).map(([id, t]) => ({ id, label: t.label, priceCents: t.priceCents, maxFiles: t.maxFiles })),
+      tiers: Object.entries(TIERS).map(([id, t]) => ({
+        id,
+        label: t.label,
+        priceCents: t.priceCents,
+        maxFiles: t.maxFiles,
+      })),
     });
   });
 
   app.post(
-    '/api/checkout',
+    "/api/checkout",
     requireUser,
     handle(async (req, res) => {
-      if (!stripe) return res.status(503).json({ error: 'Payments are not set up yet.' });
+      if (!stripe) return res.status(503).json({ error: "Payments are not set up yet." });
       const order = validateOrder(req.body);
       const { data: purchase, error } = await db
-        .from('purchases')
+        .from("purchases")
         .insert({
           user_id: req.user.id,
           email: req.user.email,
@@ -122,14 +142,14 @@ export function createApp({ config, db, stripe, jobs }) {
           tier: order.tier,
           prompt: order.prompt,
           amount_cents: order.amountCents,
-          status: 'pending',
+          status: "pending",
         })
-        .select('id')
+        .select("id")
         .single();
       if (error) throw error;
       const tier = TIERS[order.tier];
       const session = await stripe.checkout.sessions.create({
-        mode: 'payment',
+        mode: "payment",
         managed_payments: { enabled: false },
         customer_email: req.user.email,
         client_reference_id: purchase.id,
@@ -137,7 +157,7 @@ export function createApp({ config, db, stripe, jobs }) {
           {
             quantity: 1,
             price_data: {
-              currency: 'usd',
+              currency: "usd",
               unit_amount: order.amountCents,
               product_data: { name: `Forge AI ${ARCHETYPES[order.type].label} — ${tier.label}` },
             },
@@ -148,19 +168,20 @@ export function createApp({ config, db, stripe, jobs }) {
         success_url: `${config.frontendUrl}/purchases?purchase=${purchase.id}&paid=1`,
         cancel_url: `${config.frontendUrl}/purchases?purchase=${purchase.id}&cancelled=1`,
       });
-      await db.from('purchases').update({ stripe_session_id: session.id }).eq('id', purchase.id);
+      await db.from("purchases").update({ stripe_session_id: session.id }).eq("id", purchase.id);
       res.json({ url: session.url, purchaseId: purchase.id });
     }),
   );
 
   app.post(
-    '/api/generate-free',
+    "/api/generate-free",
     requireUser,
     handle(async (req, res) => {
-      if (!config.allowFreeGeneration) return res.status(403).json({ error: 'Free generation is turned off.' });
+      if (!config.allowFreeGeneration)
+        return res.status(403).json({ error: "Free generation is turned off." });
       const order = validateOrder(req.body);
       const { data, error } = await db
-        .from('purchases')
+        .from("purchases")
         .insert({
           user_id: req.user.id,
           email: req.user.email,
@@ -168,9 +189,9 @@ export function createApp({ config, db, stripe, jobs }) {
           tier: order.tier,
           prompt: order.prompt,
           amount_cents: 0,
-          status: 'queued',
+          status: "queued",
         })
-        .select('id')
+        .select("id")
         .single();
       if (error) throw error;
       jobs.enqueue(data.id);
@@ -179,14 +200,14 @@ export function createApp({ config, db, stripe, jobs }) {
   );
 
   app.get(
-    '/api/purchases',
+    "/api/purchases",
     requireUser,
     handle(async (req, res) => {
       const { data, error } = await db
-        .from('purchases')
+        .from("purchases")
         .select(PURCHASE_FIELDS)
-        .eq('user_id', req.user.id)
-        .order('created_at', { ascending: false })
+        .eq("user_id", req.user.id)
+        .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;
       res.json({ purchases: data });
@@ -194,33 +215,33 @@ export function createApp({ config, db, stripe, jobs }) {
   );
 
   app.get(
-    '/api/purchases/:id',
+    "/api/purchases/:id",
     requireUser,
     handle(async (req, res) => {
       const { data } = await db
-        .from('purchases')
+        .from("purchases")
         .select(PURCHASE_FIELDS)
-        .eq('id', req.params.id)
-        .eq('user_id', req.user.id)
+        .eq("id", req.params.id)
+        .eq("user_id", req.user.id)
         .maybeSingle();
-      if (!data) return res.status(404).json({ error: 'Purchase not found.' });
+      if (!data) return res.status(404).json({ error: "Purchase not found." });
       res.json({ purchase: data });
     }),
   );
 
   app.get(
-    '/api/purchases/:id/download',
+    "/api/purchases/:id/download",
     requireUser,
     handle(async (req, res) => {
       const { data } = await db
-        .from('purchases')
-        .select('status, storage_path')
-        .eq('id', req.params.id)
-        .eq('user_id', req.user.id)
+        .from("purchases")
+        .select("status, storage_path")
+        .eq("id", req.params.id)
+        .eq("user_id", req.user.id)
         .maybeSingle();
-      if (!data) return res.status(404).json({ error: 'Purchase not found.' });
-      if (data.status !== 'ready' || !data.storage_path) {
-        return res.status(409).json({ error: 'Your project is not ready yet.' });
+      if (!data) return res.status(404).json({ error: "Purchase not found." });
+      if (data.status !== "ready" || !data.storage_path) {
+        return res.status(409).json({ error: "Your project is not ready yet." });
       }
       // A fresh short-lived link on every request, so links never go stale in the database.
       const { data: signed, error } = await db.storage
@@ -231,7 +252,7 @@ export function createApp({ config, db, stripe, jobs }) {
     }),
   );
 
-  app.use((_req, res) => res.status(404).json({ error: 'Not found.' }));
+  app.use((_req, res) => res.status(404).json({ error: "Not found." }));
   return app;
 }
 
@@ -246,7 +267,10 @@ async function main() {
   const app = createApp({ config, db, stripe, jobs });
   app.listen(config.port, async () => {
     console.log(`Forge AI backend listening on ${config.baseUrl}`);
-    if (!stripe) console.log('Payments are off (add STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET to turn them on).');
+    if (!stripe)
+      console.log(
+        "Payments are off (add STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET to turn them on).",
+      );
 
     // Ensure storage bucket exists
     try {
@@ -256,15 +280,17 @@ async function main() {
         console.log(`[storage] Created bucket "${config.storageBucket}"`);
       }
     } catch (e) {
-      console.warn('[storage] bucket check:', e.message);
+      console.warn("[storage] bucket check:", e.message);
     }
 
-    const resumed = await jobs.recover().catch((err) => (console.error('[jobs] recover failed', err), 0));
+    const resumed = await jobs
+      .recover()
+      .catch((err) => (console.error("[jobs] recover failed", err), 0));
     if (resumed) console.log(`Resumed ${resumed} unfinished job(s).`);
   });
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
+if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   main().catch((err) => {
     console.error(err.message);
     process.exit(1);

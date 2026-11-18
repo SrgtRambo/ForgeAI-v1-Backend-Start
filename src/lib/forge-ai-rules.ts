@@ -65,7 +65,8 @@ export function toStrictSchema(input: unknown): JsonSchema {
     }
   }
   // Strict mode can't enforce item counts, so state them for the model instead.
-  const min = source["minItems"], max = source["maxItems"];
+  const min = source["minItems"],
+    max = source["maxItems"];
   if (typeof min === "number" || typeof max === "number") {
     const bound =
       typeof min === "number" && typeof max === "number"
@@ -73,7 +74,12 @@ export function toStrictSchema(input: unknown): JsonSchema {
         : typeof max === "number"
           ? `At most ${max} items.`
           : `At least ${min} items.`;
-    out["description"] = [typeof source["description"] === "string" ? source["description"] : "", bound].filter(Boolean).join(" ");
+    out["description"] = [
+      typeof source["description"] === "string" ? source["description"] : "",
+      bound,
+    ]
+      .filter(Boolean)
+      .join(" ");
   }
   if (out["type"] === "object") {
     const properties = (out["properties"] as JsonSchema | undefined) ?? {};
@@ -122,10 +128,13 @@ export function validateForgeChat(payload: unknown): ValidatedForgeChat {
     throw new ForgeRequestError("The response schema is too large.");
   }
   const schema = toStrictSchema(format);
-  if (schema["type"] !== "object") throw new ForgeRequestError("The response schema must describe an object.");
+  if (schema["type"] !== "object")
+    throw new ForgeRequestError("The response schema must describe an object.");
 
   const requested =
-    body["maxOutputTokens"] === undefined ? FORGE_AI_LIMITS.defaultOutputTokens : body["maxOutputTokens"];
+    body["maxOutputTokens"] === undefined
+      ? FORGE_AI_LIMITS.defaultOutputTokens
+      : body["maxOutputTokens"];
   if (
     !Number.isInteger(requested) ||
     (requested as number) < FORGE_AI_LIMITS.minOutputTokens ||

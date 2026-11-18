@@ -1,34 +1,45 @@
 // Pricing section.
 // Variants: three-tier, single-plan.
 
-const space = (d) => ({ compact: '0.85rem', regular: '1rem', airy: '1.25rem' }[d] || '1rem');
-const radius = (r) => ({ sharp: '0.25rem', soft: '0.75rem', round: '1.5rem' }[r] || '0.75rem');
-function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;" }[c])); }
-function sectionId(content) { return `pricing-${esc((content.sectionId || 'pricing').toLowerCase().replace(/[^a-z0-9]+/g,'-'))}`; }
+const space = (d) => ({ compact: "0.85rem", regular: "1rem", airy: "1.25rem" })[d] || "1rem";
+const radius = (r) => ({ sharp: "0.25rem", soft: "0.75rem", round: "1.5rem" })[r] || "0.75rem";
+function esc(s) {
+  return String(s ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+  );
+}
+function sectionId(content) {
+  return `pricing-${esc((content.sectionId || "pricing").toLowerCase().replace(/[^a-z0-9]+/g, "-"))}`;
+}
 
-export const type = 'pricing';
+export const type = "pricing";
 export const variants = {
-  'three-tier': {
+  "three-tier": {
     render(ctx) {
       const { content, density, radius: rad } = ctx;
-      const heading = esc(content.heading || 'Pricing');
+      const heading = esc(content.heading || "Pricing");
       const plans = Array.isArray(content.plans) ? content.plans : [];
       const id = sectionId(content);
       return `
         <section class="pricing three-tier" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="${id}-heading">
           <h2 id="${id}-heading">${heading}</h2>
           <div class="pricing-grid">
-            ${plans.map((plan) => `
-              <div class="pricing-card${plan.featured ? ' featured' : ''}">
-                <h3>${esc(plan.name || '')}</h3>
-                <div class="price">${esc(plan.price || '')}</div>
-                <p>${esc(plan.description || '')}</p>
+            ${plans
+              .map(
+                (plan) => `
+              <div class="pricing-card${plan.featured ? " featured" : ""}">
+                <h3>${esc(plan.name || "")}</h3>
+                <div class="price">${esc(plan.price || "")}</div>
+                <p>${esc(plan.description || "")}</p>
                 <ul class="plan-features">
-                  ${Array.isArray(plan.features) ? plan.features.map((f) => `<li>✓ ${esc(f)}</li>`).join('') : ''}
+                  ${Array.isArray(plan.features) ? plan.features.map((f) => `<li>✓ ${esc(f)}</li>`).join("") : ""}
                 </ul>
-                ${plan.buttonLabel ? `<a href="${esc(plan.buttonHref || '#')}" class="btn">${esc(plan.buttonLabel)}</a>` : ''}
+                ${plan.buttonLabel ? `<a href="${esc(plan.buttonHref || "#")}" class="btn">${esc(plan.buttonLabel)}</a>` : ""}
               </div>
-            `).join('')}
+            `,
+              )
+              .join("")}
           </div>
         </section>
       `;
@@ -49,23 +60,23 @@ export const variants = {
       .btn:focus-visible { outline:2px solid var(--brand); outline-offset:2px; }
     `,
   },
-  'single-plan': {
+  "single-plan": {
     render(ctx) {
       const { content, density, radius: rad } = ctx;
-      const heading = esc(content.heading || 'Pricing');
+      const heading = esc(content.heading || "Pricing");
       const plan = content.plan || {};
       const id = sectionId(content);
       return `
         <section class="pricing single-plan" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="${id}-heading">
           <h2 id="${id}-heading">${heading}</h2>
           <div class="single-pricing">
-            <h3>${esc(plan.name || '')}</h3>
-            <div class="price">${esc(plan.price || '')}</div>
-            <p>${esc(plan.description || '')}</p>
+            <h3>${esc(plan.name || "")}</h3>
+            <div class="price">${esc(plan.price || "")}</div>
+            <p>${esc(plan.description || "")}</p>
             <ul class="plan-features">
-              ${Array.isArray(plan.features) ? plan.features.map((f) => `<li>✓ ${esc(f)}</li>`).join('') : ''}
+              ${Array.isArray(plan.features) ? plan.features.map((f) => `<li>✓ ${esc(f)}</li>`).join("") : ""}
             </ul>
-            ${plan.buttonLabel ? `<a href="${esc(plan.buttonHref || '#')}" class="btn">${esc(plan.buttonLabel)}</a>` : ''}
+            ${plan.buttonLabel ? `<a href="${esc(plan.buttonHref || "#")}" class="btn">${esc(plan.buttonLabel)}</a>` : ""}
           </div>
         </section>
       `;

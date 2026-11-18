@@ -3,7 +3,7 @@
 // If no usable photo is found, returns a designed-placeholder result.
 // Also handles customer uploads and URL-sourced images.
 
-import sharp from 'sharp';
+import sharp from "sharp";
 
 const MIN_WIDTH = 2000;
 const DOWNLOAD_WIDTH = 1600;
@@ -39,7 +39,8 @@ async function fetchWithRetry({ url, headers, timeoutMs = 10_000, retries = 2 })
       return response;
     } catch (err) {
       lastError = err;
-      if (attempt < retries) await new Promise((r) => setTimeout(r, Math.min(1000 * 2 ** attempt, 5000)));
+      if (attempt < retries)
+        await new Promise((r) => setTimeout(r, Math.min(1000 * 2 ** attempt, 5000)));
     } finally {
       clearTimeout(timer);
     }
@@ -49,7 +50,7 @@ async function fetchWithRetry({ url, headers, timeoutMs = 10_000, retries = 2 })
 
 async function downloadImage(url, destPath, { maxWidth = DOWNLOAD_WIDTH, quality = 82 }) {
   const response = await fetchWithRetry({ url });
-  const contentType = response.headers.get('content-type') || '';
+  const contentType = response.headers.get("content-type") || "";
   if (!/image\/(jpeg|png|webp)/i.test(contentType)) {
     throw new Error(`Unsupported content type: ${contentType}`);
   }
@@ -98,19 +99,25 @@ export async function resolveAndDownload({ slot, destPath, unsplash, pexels }) {
   if (!result.photo) {
     return {
       slotId: slot.id,
-      source: 'none',
+      source: "none",
       filePath: null,
-      credit: { provider: 'none', photographer: '', photographerUrl: '', sourceUrl: '', license: 'designed placeholder' },
+      credit: {
+        provider: "none",
+        photographer: "",
+        photographerUrl: "",
+        sourceUrl: "",
+        license: "designed placeholder",
+      },
       placeholder: true,
       error: result.error,
     };
   }
 
   const photo = result.photo;
-  const providerName = result.provider === unsplash ? 'unsplash' : 'pexels';
+  const providerName = result.provider === unsplash ? "unsplash" : "pexels";
 
   let downloadUrl = null;
-  if (providerName === 'unsplash') {
+  if (providerName === "unsplash") {
     downloadUrl = photo.urls?.full || photo.urls?.regular;
     await unsplash.downloadLocation(photo);
   } else {
@@ -118,31 +125,31 @@ export async function resolveAndDownload({ slot, destPath, unsplash, pexels }) {
   }
 
   if (!downloadUrl) {
-    return { slotId: slot.id, source: 'none', filePath: null, credit: {}, placeholder: true };
+    return { slotId: slot.id, source: "none", filePath: null, credit: {}, placeholder: true };
   }
 
   await downloadImage(downloadUrl, destPath);
 
   const credit =
-    providerName === 'unsplash'
+    providerName === "unsplash"
       ? {
-          provider: 'Unsplash',
-          photographer: photo.user?.name || 'Unknown',
-          photographerUrl: photo.user?.links?.html || '',
+          provider: "Unsplash",
+          photographer: photo.user?.name || "Unknown",
+          photographerUrl: photo.user?.links?.html || "",
           sourceUrl: photo.links?.html || downloadUrl,
-          license: 'Unsplash License',
+          license: "Unsplash License",
         }
       : {
-          provider: 'Pexels',
-          photographer: photo.photographer || 'Unknown',
-          photographerUrl: `https://www.pexels.com/@${photo.photographer?.toLowerCase()?.replace(/\s+/g, '-')}`,
+          provider: "Pexels",
+          photographer: photo.photographer || "Unknown",
+          photographerUrl: `https://www.pexels.com/@${photo.photographer?.toLowerCase()?.replace(/\s+/g, "-")}`,
           sourceUrl: photo.url || downloadUrl,
-          license: 'Pexels License',
+          license: "Pexels License",
         };
 
   return {
     slotId: slot.id,
-    source: 'stock',
+    source: "stock",
     filePath: destPath,
     credit,
     placeholder: false,
@@ -150,7 +157,11 @@ export async function resolveAndDownload({ slot, destPath, unsplash, pexels }) {
 }
 
 /** Process a customer-uploaded image buffer: re-encode to JPEG, strip EXIF. */
-export async function processUpload(buffer, destPath, { maxWidth = DOWNLOAD_WIDTH, quality = 82 } = {}) {
+export async function processUpload(
+  buffer,
+  destPath,
+  { maxWidth = DOWNLOAD_WIDTH, quality = 82 } = {},
+) {
   const metadata = await sharp(buffer).metadata();
   if (!/jpeg|png|webp/.test(metadata.format)) {
     throw new Error(`Unsupported image format: ${metadata.format}`);
@@ -162,18 +173,32 @@ export async function processUpload(buffer, destPath, { maxWidth = DOWNLOAD_WIDT
     .resize({ width: maxWidth, withoutEnlargement: true })
     .jpeg({ quality })
     .toFile(destPath);
-  return { path: destPath, source: 'upload', credit: { provider: 'customer', photographer: 'Provided by customer', photographerUrl: '', sourceUrl: '', license: 'Customer upload' } };
+  return {
+    path: destPath,
+    source: "upload",
+    credit: {
+      provider: "customer",
+      photographer: "Provided by customer",
+      photographerUrl: "",
+      sourceUrl: "",
+      license: "Customer upload",
+    },
+  };
 }
 
 /** Process an image from a URL: fetch with validation, reject private/loopback IPs, re-encode. */
-export async function processImageUrl(imageUrl, destPath, { maxWidth = DOWNLOAD_WIDTH, quality = 82 } = {}) {
+export async function processImageUrl(
+  imageUrl,
+  destPath,
+  { maxWidth = DOWNLOAD_WIDTH, quality = 82 } = {},
+) {
   const parsed = new URL(imageUrl);
   if (isPrivateOrLoopback(parsed.hostname)) {
-    throw new Error('Private or loopback addresses are not allowed.');
+    throw new Error("Private or loopback addresses are not allowed.");
   }
 
   const response = await fetchWithRetry({ url: imageUrl });
-  const contentType = response.headers.get('content-type') || '';
+  const contentType = response.headers.get("content-type") || "";
   if (!isAcceptableImageType(contentType)) {
     throw new Error(`Unsupported content type: ${contentType}`);
   }
@@ -190,8 +215,14 @@ export async function processImageUrl(imageUrl, destPath, { maxWidth = DOWNLOAD_
 
   return {
     path: destPath,
-    source: 'url',
-    credit: { provider: 'url', photographer: '', photographerUrl: '', sourceUrl: imageUrl, license: 'Customer-provided URL' },
+    source: "url",
+    credit: {
+      provider: "url",
+      photographer: "",
+      photographerUrl: "",
+      sourceUrl: imageUrl,
+      license: "Customer-provided URL",
+    },
   };
 }
 
@@ -200,7 +231,7 @@ export function isPrivateAddress(hostname) {
 }
 
 export function isAcceptableImageType(contentType) {
-  return /image\/(jpeg|png|webp)/i.test(contentType ?? '');
+  return /image\/(jpeg|png|webp)/i.test(contentType ?? "");
 }
 
 export { MAX_BYTES };

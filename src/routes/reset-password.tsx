@@ -32,7 +32,9 @@ function ResetPasswordPage() {
 
   useEffect(() => {
     const isRecovery = window.location.hash.includes("type=recovery");
-    void supabase.auth.getSession().then(({ data }) => setReady(isRecovery || Boolean(data.session)));
+    void supabase.auth
+      .getSession()
+      .then(({ data }) => setReady(isRecovery || Boolean(data.session)));
     const { data } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") setReady(true);
     });
@@ -60,19 +62,39 @@ function ResetPasswordPage() {
           <h1 className="text-2xl font-bold">Choose a new password</h1>
           {!ready ? (
             <p className="mt-3 text-sm text-muted-foreground">
-              Open this page from the reset link in your email. Links expire after a while — request a new one from the sign-in page if needed.
+              Open this page from the reset link in your email. Links expire after a while — request
+              a new one from the sign-in page if needed.
             </p>
           ) : (
             <form className="mt-6 space-y-4" onSubmit={onSubmit}>
               <div className="space-y-1.5">
                 <Label htmlFor="new-password">New password</Label>
-                <Input id="new-password" type="password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" />
+                <Input
+                  id="new-password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="At least 8 characters"
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="confirm-password">Confirm new password</Label>
-                <Input id="confirm-password" type="password" autoComplete="new-password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                />
               </div>
-              {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+              {error && (
+                <p role="alert" className="text-sm text-destructive">
+                  {error}
+                </p>
+              )}
               <Button type="submit" variant="forge" size="xl" className="w-full" disabled={busy}>
                 {busy ? "Saving…" : "Save new password"}
               </Button>

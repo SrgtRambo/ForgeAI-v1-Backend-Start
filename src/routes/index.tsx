@@ -17,7 +17,8 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Forge AI — custom software your company is missing" },
       {
         property: "og:description",
-        content: "Describe your business problem and Forge AI designs, builds, and tests a custom app for it.",
+        content:
+          "Describe your business problem and Forge AI designs, builds, and tests a custom app for it.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -27,10 +28,26 @@ export const Route = createFileRoute("/")({
 });
 
 const steps = [
-  { n: "01", title: "Discovery", body: "Answer a few questions about how your business runs today. Forge AI asks smart follow-ups." },
-  { n: "02", title: "Architecture", body: "Review a blueprint of screens, data, and workflows before anything is built." },
-  { n: "03", title: "Generate", body: "Forge AI writes the app — page, styling, and behavior — and opens a live preview." },
-  { n: "04", title: "Test & ship", body: "Built-in checks catch common problems. Download the project when you're happy." },
+  {
+    n: "01",
+    title: "Discovery",
+    body: "Answer a few questions about how your business runs today. Forge AI asks smart follow-ups.",
+  },
+  {
+    n: "02",
+    title: "Architecture",
+    body: "Review a blueprint of screens, data, and workflows before anything is built.",
+  },
+  {
+    n: "03",
+    title: "Generate",
+    body: "Forge AI writes the app — page, styling, and behavior — and opens a live preview.",
+  },
+  {
+    n: "04",
+    title: "Test & ship",
+    body: "Built-in checks catch common problems. Download the project when you're happy.",
+  },
 ];
 
 function Landing() {
@@ -57,7 +74,9 @@ function Landing() {
                 <Link to="/auth">Sign in</Link>
               </Button>
               <Button asChild variant="forge" size="sm">
-                <Link to="/auth" search={{ mode: "signup" }}>Get started</Link>
+                <Link to="/auth" search={{ mode: "signup" }}>
+                  Get started
+                </Link>
               </Button>
             </>
           )}
@@ -67,7 +86,13 @@ function Landing() {
       <main>
         <section className="relative overflow-hidden">
           <div className="absolute inset-0">
-            <img src={heroImage} alt="" width={1536} height={1024} className="h-full w-full object-cover opacity-55" />
+            <img
+              src={heroImage}
+              alt=""
+              width={1536}
+              height={1024}
+              className="h-full w-full object-cover opacity-55"
+            />
             <div className="absolute inset-0 bg-gradient-to-r from-background via-background/85 to-background/20" />
             <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-background to-transparent" />
           </div>
@@ -79,12 +104,18 @@ function Landing() {
               Forge the software <span className="text-ember">your company is missing.</span>
             </h1>
             <p className="animate-rise mt-6 max-w-xl text-base text-muted-foreground sm:text-lg">
-              Describe the problem. Forge AI plans, builds, and tests a custom app around the way your team actually works — no
-              developers required.
+              Describe the problem. Forge AI plans, builds, and tests a custom app around the way
+              your team actually works — no developers required.
             </p>
             <div className="animate-rise mt-9 flex flex-wrap gap-3">
               <Button asChild variant="forge" size="xl">
-                {signedIn ? <Link to="/studio">Open your studio →</Link> : <Link to="/auth" search={{ mode: "signup" }}>Start building free →</Link>}
+                {signedIn ? (
+                  <Link to="/studio">Open your studio →</Link>
+                ) : (
+                  <Link to="/auth" search={{ mode: "signup" }}>
+                    Start building free →
+                  </Link>
+                )}
               </Button>
               {!signedIn && (
                 <Button asChild variant="outline" size="xl">
@@ -108,8 +139,14 @@ function Landing() {
 
           <div className="mt-10 grid gap-4 md:grid-cols-3">
             {[
-              ["Private by default", "Every project is tied to your account. No one else can see or change it."],
-              ["Saved automatically", "Requirements, blueprints, source, and version history sync as you work."],
+              [
+                "Private by default",
+                "Every project is tied to your account. No one else can see or change it.",
+              ],
+              [
+                "Saved automatically",
+                "Requirements, blueprints, source, and version history sync as you work.",
+              ],
               ["Yours to keep", "Download any project as a ZIP and run it anywhere — no lock-in."],
             ].map(([title, body]) => (
               <div key={title} className="rounded-xl border border-border bg-card/60 p-5">
