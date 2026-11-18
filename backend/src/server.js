@@ -1476,6 +1476,24 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Toggle project favorite ----------
+
+  app.patch(
+    "/api/projects/:id/favorite",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.params;
+      const { favorite } = req.body || {};
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const rows = await db.query(
+        `update projects set is_favorite = $1, updated_at = now() where id = $2 and user_id = $3 returning id, is_favorite`,
+        [favorite !== false, id, req.user.id],
+      );
+      if (!rows[0]) return res.status(404).json({ error: "Project not found." });
+      res.json({ project: rows[0] });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
