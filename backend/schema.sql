@@ -204,3 +204,16 @@ create table if not exists feedback (
 
 create index if not exists feedback_user_id_idx on feedback(user_id);
 create index if not exists feedback_created_at_idx on feedback(created_at desc);
+
+-- Project activity log.
+create table if not exists project_activity (
+  id uuid primary key default gen_random_uuid(),
+  project_id text not null references projects(id) on delete cascade,
+  user_id text references users(id),
+  action text not null,
+  details jsonb,
+  created_at timestamptz default now()
+);
+
+create index if not exists project_activity_project_id_idx on project_activity(project_id);
+create index if not exists project_activity_created_at_idx on project_activity(created_at desc);

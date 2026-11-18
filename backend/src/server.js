@@ -1617,6 +1617,44 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Project activity log ----------
+
+  app.get(
+    "/api/projects/:id/activity",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.params;
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const owner = await db.query(`select id from projects where id = $1 and user_id = $2`, [id, req.user.id]);
+      if (!owner[0]) return res.status(404).json({ error: "Project not found." });
+      const rows = await db.query(
+        `select id, action, details, created_at from project_activity where project_id = $1 order by created_at desc limit 50`,
+        [id],
+      );
+      res.json({ activity: rows });
+    }),
+  );
+
+  app.post(
+    "/api/projects/:id/activity",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.params;
+      const { action, details } = req.body || {};
+      if (!action || typeof action !== "string") {
+        return res.status(400).json({ error: "action is required." });
+      }
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const owner = await db.query(`select id from projects where id = $1 and user_id = $2`, [id, req.user.id]);
+      if (!owner[0]) return res.status(404).json({ error: "Project not found." });
+      const row = await db.query(
+        `insert into project_activity (project_id, user_id, action, details) values ($1, $2, $3, $4) returning id, created_at`,
+        [id, req.user.id, action, JSON.stringify(details || {})],
+      );
+      res.status(201).json({ activity: row[0] });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
