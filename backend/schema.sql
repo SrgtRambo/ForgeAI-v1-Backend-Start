@@ -5,6 +5,7 @@
 create table if not exists users (
   id text primary key,
   name text,
+  email text,
   created_at timestamptz default now()
 );
 
@@ -77,6 +78,19 @@ create table if not exists site_image_assets (
 );
 
 create index if not exists site_image_assets_brief_id_idx on site_image_assets(brief_id);
+
+-- Projects: replaces Supabase forge_projects table. Stores user project state.
+create table if not exists projects (
+  id text primary key,
+  user_id text not null references users(id),
+  name text not null default 'Untitled project',
+  stage text not null default '',
+  data jsonb not null default '{}',
+  updated_at timestamptz default now()
+);
+
+create index if not exists projects_user_id_idx on projects(user_id);
+create index if not exists projects_updated_at_idx on projects(updated_at desc);
 
 -- Analysis usage tracking: one row per user per day.
 create table if not exists analysis_usage (

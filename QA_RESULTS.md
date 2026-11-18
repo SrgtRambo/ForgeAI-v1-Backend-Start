@@ -37,9 +37,9 @@ Command: `cd backend && NODE_ENV=test npm test`
 | 4 | Analysis + spec generation | Pass |
 | 5 | Stock imagery (Unsplash/Pexels fallback) | Pass |
 | 6 | Build spec → static site files | Pass |
-| 7 | QA render + critic (Playwright + axe-core) | Code complete; Chromium-graceful (rendered QA skipped when browser deps unavailable) |
+| 7 | QA render + critic (Playwright + axe-core) | Code complete; Chromium supported via replit.nix system deps (rendered QA works when browser deps installed) |
 | 8 | Database schema + API routes + tests | Implemented (149 tests pass) |
-| 9 | Studio UI (studio.tsx + Forge workspace) | Route exists; Supabase/Lovable-managed per AGENTS.md |
+| 9 | Studio UI (studio.tsx + Forge workspace) | Replit-native; Supabase fully removed; uses backend API via src/lib/api.ts |
 | 10 | Acceptance (this document + REVIEW.md) | Not run (requires .env secrets + live server) |
 
 ## QA Render Gate

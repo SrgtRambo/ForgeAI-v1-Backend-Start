@@ -726,6 +726,119 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Profile (replaces Supabase profiles table) ----------
+
+  async function ensureUser(id, name, email) {
+    await db.query(
+      `insert into users (id, name, email) values ($1, $2, $3)
+       on conflict (id) do update set name = coalesce($2, users.name), email = coalesce($3, users.email)`,
+      [id, name || null, email || null],
+    );
+  }
+
+  app.get(
+    "/api/users/me",
+    requireUser,
+    handle(async (req, res) => {
+      const { id, name } = req.user;
+      const email = req.headers["x-replit-user-email"] || undefined;
+      await ensureUser(id, name, email);
+      const rows = await db.query(`select id, name, email, created_at from users where id = $1`, [id]);
+      res.json({ user: rows[0] });
+    }),
+  );
+
+  app.patch(
+    "/api/users/me",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.user;
+      const { name, email } = req.body || {};
+      const updates = [];
+      const params = [];
+      if (name !== undefined) {
+        updates.push(`name = $${updates.length + 2}`);
+        params.push(name);
+      }
+      if (email !== undefined) {
+        updates.push(`email = $${updates.length + 2}`);
+        params.push(email);
+      }
+      if (updates.length === 0) return res.status(400).json({ error: "Nothing to update." });
+      params.push(id);
+      await db.query(`update users set ${updates.join(", ")} where id = $${updates.length + 1}`, params);
+      const rows = await db.query(`select id, name, email, created_at from users where id = $1`, [id]);
+      res.json({ user: rows[0] });
+    }),
+  );
+
+  // ---------- Projects (replaces Supabase forge_projects table) ----------
+
+  app.get(
+    "/api/projects",
+    requireUser,
+    handle(async (req, res) => {
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const rows = await db.query(
+        `select id, name, stage, data, updated_at from projects where user_id = $1 order by updated_at desc`,
+        [req.user.id],
+      );
+      res.json({ projects: rows.map((r) => ({ id: r.id, name: r.name, stage: r.stage, data: r.data, updated_at: r.updated_at })) });
+    }),
+  );
+
+  app.post(
+    "/api/projects",
+    requireUser,
+    handle(async (req, res) => {
+      const { id, name, stage, data } = req.body || {};
+      if (!id || typeof id !== "string") return res.status(400).json({ error: "project id is required." });
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const row = await db.query(
+        `insert into projects (id, user_id, name, stage, data) values ($1, $2, $3, $4, $5)
+         on conflict (id) do update set name = $3, stage = $4, data = $5, updated_at = now()
+         returning id, name, stage, data, updated_at`,
+        [id, req.user.id, name || "Untitled project", stage || "", data || {}],
+      );
+      res.json({ project: row[0] });
+    }),
+  );
+
+  app.patch(
+    "/api/projects/:id",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.params;
+      const { name, stage, data } = req.body || {};
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const updates = [];
+      const params = [];
+      if (name !== undefined) { updates.push(`name = $${updates.length + 2}`); params.push(name); }
+      if (stage !== undefined) { updates.push(`stage = $${updates.length + 2}`); params.push(stage); }
+      if (data !== undefined) { updates.push(`data = $${updates.length + 2}`); params.push(data); }
+      if (updates.length === 0) return res.status(400).json({ error: "Nothing to update." });
+      params.push(id);
+      const rows = await db.query(
+        `update projects set ${updates.join(", ")} where id = $1 and user_id = $2 returning id, name, stage, data, updated_at`,
+        [id, req.user.id, ...params.slice(updates.length)],
+      );
+      if (!rows[0]) return res.status(404).json({ error: "Project not found." });
+      res.json({ project: rows[0] });
+    }),
+  );
+
+  app.delete(
+    "/api/projects/:id",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.params;
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const rows = await db.query(`delete from projects where id = $1 and user_id = $2 returning id`, [id, req.user.id]);
+      if (!rows[0]) return res.status(404).json({ error: "Project not found." });
+      res.json({ deleted: true });
+    }),
+  );
+
   // Multer error handler (e.g. file too large)
   app.use((err, req, res, next) => {
     if (err.code === "LIMIT_FILE_SIZE") {

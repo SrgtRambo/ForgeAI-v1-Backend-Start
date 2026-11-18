@@ -29,10 +29,16 @@
     pkgs.freetype
     pkgs.gtk3
     pkgs.xorg.libxkbcommon
+    pkgs.xorg.libxkbfile
     pkgs.alsa
     pkgs.ffmpeg
     pkgs.openssl
     pkgs.zlib
+    pkgs.libgbm
+    pkgs.libdrm
+    pkgs.libxshmfence
+    pkgs.libnotify
+    pkgs.libXcomposite
   ];
 
   env = {

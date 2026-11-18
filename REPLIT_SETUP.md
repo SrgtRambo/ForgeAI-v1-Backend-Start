@@ -62,12 +62,15 @@ Visit `https://<your-repl>.replit.dev/health` — you should see:
 { "ok": true, "payments": false, "freeGeneration": false, "jobs": 0 }
 ```
 
-## 6. What Works Without Any Secrets
+## 6. Run the Frontend Studio
 
-- `GET /health` — health check
-- `GET /api/catalog` — site types and tiers
-- All `POST /api/site/*` routes require auth (Replit headers) and `OPENROUTER_API_KEY`
-- `POST /api/checkout` and `/api/generate-free` require `STRIPE_SECRET_KEY` or `ALLOW_FREE_GENERATION=true`
+The frontend (`src/`) is a TanStack Start app that now calls the backend API directly (no Supabase). To run it on Replit:
+
+1. Add `VITE_BACKEND_URL` as a Replit Secret pointing to your backend's URL (e.g. `https://<your-backend-repl>.replit.dev`)
+2. In the frontend Shell: `npm run dev`
+3. Visit `https://<your-frontend-repl>.replit.dev/studio`
+
+The Studio will authenticate via Replit headers (`X-Replit-User-Id`), load projects from the backend API, and sync changes back to the backend.
 
 ## 7. Architecture Notes
 
@@ -76,7 +79,5 @@ Visit `https://<your-repl>.replit.dev/health` — you should see:
 - **Storage**: Replit Object Storage (`@replit/object-storage`) for zips and images.
 - **AI**: OpenRouter (`OPENROUTER_API_KEY`) for analysis, copy, and QA critic.
 - **Images**: Unsplash → Pexels fallback; no hotlinking; images stored in Replit Object Storage.
-
-## 8. Frontend (Lovable) — Separate
-
-The frontend (`src/`, `public/forge/`) is a Lovable-managed Supabase app and is deployed separately through Lovable. The backend and frontend are independent stacks; the frontend calls the backend API directly.
+- **Frontend**: Replit-native; no Supabase imports remain in active code paths. Calls backend API via `src/lib/api.ts`.
+- **Chromium**: `replit.nix` includes system libraries for Playwright/Chromium (Phase 7 QA render gate).

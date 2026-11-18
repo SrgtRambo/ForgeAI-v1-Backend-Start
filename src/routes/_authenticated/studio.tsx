@@ -3,25 +3,30 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { supabase } from "@/integrations/supabase/client";
-import { createForgeCloud, loadForgeProjects, type SyncState } from "@/lib/forge-cloud";
-import { profileQueryOptions } from "@/lib/profile";
+import {
+  getCurrentUser,
+  listProjects,
+  createProject,
+  updateProject,
+  deleteProject,
+  type ApiProject,
+  type ApiUser,
+} from "@/lib/api";
 
-const FORGE_VERSION = "3";
+const FORGE_VERSION = "4";
 const FORGE_SCRIPTS = ["architect.js", "ai-provider.js", "generator.js", "testing.js", "sample-projects.js", "app.js"];
 
+type StudioLoaderData = {
+  user: ApiUser;
+  projects: ApiProject[];
+};
+
 export const Route = createFileRoute("/_authenticated/studio")({
-  head: () => ({
-    meta: [
-      { title: "Studio — Forge AI" },
-      { name: "description", content: "Plan, generate, preview, and test custom business software with Forge AI." },
-      { property: "og:title", content: "Studio — Forge AI" },
-      { property: "og:description", content: "Plan, generate, preview, and test custom business software with Forge AI." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(profileQueryOptions(context.user.id)),
+  loader: async (): Promise<StudioLoaderData> => {
+    const user = await getCurrentUser();
+    const projects = await listProjects();
+    return { user, projects };
+  },
   component: StudioPage,
 });
 
@@ -39,12 +44,12 @@ function loadScript(src: string) {
 
 function StudioPage() {
   const { user } = Route.useRouteContext();
-  const profile = Route.useLoaderData();
+  const { user: profileUser, projects } = Route.useLoaderData() as StudioLoaderData;
   const hostRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [slot, setSlot] = useState<HTMLElement | null>(null);
-  const [sync, setSync] = useState<{ state: SyncState; message?: string | undefined }>({ state: "saved" });
+  const [sync, setSync] = useState<{ state: "saved" | "saving" | "error"; message?: string }>({ state: "saved" });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -58,16 +63,91 @@ function StudioPage() {
     added.push(link);
 
     (async () => {
-      const [markup, projects] = await Promise.all([
-        fetch(`/forge/workspace.html?v=${FORGE_VERSION}`).then((r) => {
-          if (!r.ok) throw new Error("Could not load the Forge workspace.");
-          return r.text();
-        }),
-        loadForgeProjects(),
-      ]);
+      const markup = await fetch(`/forge/workspace.html?v=${FORGE_VERSION}`).then((r) => {
+        if (!r.ok) throw new Error("Could not load the Forge workspace.");
+        return r.text();
+      });
       if (cancelled || !hostRef.current) return;
       hostRef.current.innerHTML = markup;
-      window.ForgeCloud = createForgeCloud(user.id, projects, (state, message) => setSync({ state, message }));
+
+      // Minimal ForgeCloud bridge backed by the Replit backend API.
+      const saved = new Map<string, string>();
+      projects.forEach((p: ApiProject) => saved.set(p.id, JSON.stringify(p)));
+      let pending: string | null = null;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      let running = Promise.resolve();
+
+      async function push(serialized: string) {
+        const list = JSON.parse(serialized) as ApiProject[];
+        const seen = new Set<string>();
+        const upserts: Array<{ id: string; name: string; stage: string; data: Record<string, unknown> }> = [];
+        for (const project of list) {
+          if (!project || typeof project.id !== "string") continue;
+          seen.add(project.id);
+          const text = JSON.stringify(project);
+          if (saved.get(project.id) === text) continue;
+          upserts.push({
+            id: project.id,
+            name: String(project.name ?? "Untitled project").slice(0, 200),
+            stage: String(project.stage ?? "").slice(0, 80),
+            data: project.data ?? {},
+          });
+        }
+        const removed = [...saved.keys()].filter((id) => !seen.has(id));
+        for (const project of upserts) {
+          try {
+            await createProject(project);
+            saved.set(project.id, JSON.stringify(project));
+          } catch {
+            await updateProject(project.id, {
+              name: project.name,
+              stage: project.stage,
+              data: project.data,
+            });
+            saved.set(project.id, JSON.stringify(project));
+          }
+        }
+        for (const id of removed) {
+          try {
+            await deleteProject(id);
+            saved.delete(id);
+          } catch {}
+        }
+        if (pending === null) setSync({ state: "saved" });
+      }
+
+      function flush() {
+        if (timer) clearTimeout(timer);
+        timer = undefined;
+        const next = pending;
+        pending = null;
+        if (next === null) return running;
+        running = running
+          .then(() => push(next))
+          .then(() => {
+            if (pending === null) setSync({ state: "saved" });
+          })
+          .catch((error: unknown) => {
+            console.error("[forge] save failed", error);
+            if (pending === null) pending = next;
+            setSync({ state: "error", message: error instanceof Error ? error.message : "Unknown error" });
+          });
+        return running;
+      }
+
+      window.ForgeCloud = {
+        initialProjects: projects,
+        sync(projs: ApiProject[]) {
+          pending = JSON.stringify(projs);
+          setSync({ state: "saving" });
+          if (timer) clearTimeout(timer);
+          timer = setTimeout(() => void flush(), 700);
+        },
+        flush,
+        hasPendingChanges: () => pending !== null,
+        getAccessToken: async () => null,
+      };
+
       for (const file of FORGE_SCRIPTS) {
         if (cancelled) return;
         added.push(await loadScript(`/forge/${file}?v=${FORGE_VERSION}`));
@@ -103,12 +183,11 @@ function StudioPage() {
     await window.ForgeCloud?.flush();
     await queryClient.cancelQueries();
     queryClient.clear();
-    await supabase.auth.signOut();
     window.ForgeCloud = undefined;
     await navigate({ to: "/auth", replace: true });
   }
 
-  const name = profile.display_name || user.email || "Your account";
+  const name = profileUser?.name || profileUser?.email || "Your account";
   const syncLabel = sync.state === "saving" ? "SAVING…" : sync.state === "error" ? "NOT SAVED — RETRYING ON NEXT CHANGE" : "ALL CHANGES SAVED";
 
   return (
@@ -134,7 +213,7 @@ function StudioPage() {
             <span className={`sync-state${sync.state === "error" ? " error" : ""}`} title={sync.message} role="status">
               {syncLabel}
             </span>
-            <span className="account-name" title={user.email ?? undefined}>
+            <span className="account-name" title={profileUser?.email ?? undefined}>
               {name}
             </span>
             <a className="btn" href="/account" onClick={(e) => { e.preventDefault(); void navigate({ to: "/account" }); }}>

@@ -11,7 +11,6 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import { Toaster } from "@/components/ui/sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { setAuthSession } from "@/lib/auth-store";
 
 import appCss from "../styles.css?url";
@@ -136,14 +135,7 @@ function RootComponent() {
   const router = useRouter();
 
   useEffect(() => {
-    void supabase.auth.getSession().then(({ data }) => setAuthSession(data.session));
-    const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      setAuthSession(session);
-      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
-      void router.invalidate();
-      if (event !== "SIGNED_OUT") void queryClient.invalidateQueries();
-    });
-    return () => data.subscription.unsubscribe();
+    void setAuthSession(null);
   }, [router, queryClient]);
 
   return (
