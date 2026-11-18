@@ -1171,6 +1171,29 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Project duplication ----------
+
+  app.post(
+    "/api/projects/:id/duplicate",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.params;
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const rows = await db.query(
+        `select name, stage, data, type from projects where id = $1 and user_id = $2`,
+        [id, req.user.id],
+      );
+      if (!rows[0]) return res.status(404).json({ error: "Project not found." });
+      const proj = rows[0];
+      const newId = `proj_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+      const newRow = await db.query(
+        `insert into projects (id, user_id, name, stage, data, type, version) values ($1, $2, $3, $4, $5, $6, 1) returning id, name, stage, data, updated_at, version`,
+        [newId, req.user.id, `${proj.name} (copy)`, proj.stage, JSON.stringify(proj.data), proj.type],
+      );
+      res.status(201).json({ project: newRow[0] });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(

@@ -233,6 +233,12 @@ export async function publishSite(briefId: string) {
   return res.json();
 }
 
+export async function duplicateProject(id: string) {
+  const res = await apiRequest(`/api/projects/${id}/duplicate`, { method: "POST" });
+  const data = await res.json();
+  return data.project as ApiProject;
+}
+
 export async function healthCheck() {
   const res = await apiRequest("/health");
   return res.json();
