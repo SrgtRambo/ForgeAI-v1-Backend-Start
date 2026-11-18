@@ -1018,6 +1018,40 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Revision system ----------
+
+  app.post(
+    "/api/projects/:id/revise",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.params;
+      const { instruction } = req.body || {};
+      if (!instruction || typeof instruction !== "string") {
+        return res.status(400).json({ error: "instruction is required." });
+      }
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      // Save current version first
+      const rows = await db.query(
+        `select name, stage, data, version from projects where id = $1 and user_id = $2`,
+        [id, req.user.id],
+      );
+      if (!rows[0]) return res.status(404).json({ error: "Project not found." });
+      const proj = rows[0];
+      const currentVer = proj.version || 1;
+      await db.query(
+        `insert into project_versions (project_id, version_number, name, stage, data) values ($1, $2, $3, $4, $5)`,
+        [id, currentVer, proj.name, proj.stage, JSON.stringify(proj.data)],
+      );
+      const revisedData = { ...proj.data, _lastRevision: instruction, _revisedAt: new Date().toISOString() };
+      const newVer = currentVer + 1;
+      await db.query(
+        `update projects set data = $1, version = $2, updated_at = now() where id = $3 and user_id = $4`,
+        [JSON.stringify(revisedData), newVer, id, req.user.id],
+      );
+      res.json({ projectId: id, newVersion: newVer, instruction });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(

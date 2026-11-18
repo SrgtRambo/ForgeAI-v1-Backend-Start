@@ -199,6 +199,14 @@ export async function generateWorkflow(body: { name: string; description?: strin
   return res.json();
 }
 
+export async function reviseProject(id: string, instruction: string) {
+  const res = await apiRequest(`/api/projects/${id}/revise`, {
+    method: "POST",
+    body: JSON.stringify({ instruction }),
+  });
+  return res.json();
+}
+
 export async function healthCheck() {
   const res = await apiRequest("/health");
   return res.json();
