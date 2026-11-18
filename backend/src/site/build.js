@@ -54,6 +54,7 @@ function buildPage(page, spec, images, baseUrl) {
     `<meta property="og:title" content="${esc(title)}">`,
     `<meta property="og:description" content="${esc(description || spec.meta.businessName)}">`,
     heroImageUrl ? `<meta property="og:image" content="${esc(heroImageUrl)}">` : "",
+    `<script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@type": "Organization", "name": spec.meta.businessName })}</script>`,
     `<link rel="preconnect" href="https://fonts.googleapis.com">`,
     `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>`,
     `<link rel="stylesheet" href="css/site.css">`,
