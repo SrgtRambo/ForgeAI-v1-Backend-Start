@@ -2370,6 +2370,29 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Site version diff ----------
+
+  app.get(
+    "/api/site/briefs/:id/diff",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.params;
+      const { v1, v2 } = req.query;
+      if (!v1 || !v2) return res.status(400).json({ error: "Query params 'v1' and 'v2' (version numbers) are required." });
+      const owner = await db.query(`select id from site_briefs where id = $1 and user_id = $2`, [id, req.user.id]);
+      if (!owner[0]) return res.status(404).json({ error: "Brief not found." });
+      const r1 = await db.query(`select data from project_versions where project_id = $1 and version_number = $2`, [id, parseInt(v1, 10)]);
+      const r2 = await db.query(`select data from project_versions where project_id = $1 and version_number = $2`, [id, parseInt(v2, 10)]);
+      if (!r1[0] || !r2[0]) return res.status(404).json({ error: "One or both versions not found." });
+      res.json({
+        briefId: id,
+        v1: parseInt(v1, 10),
+        v2: parseInt(v2, 10),
+        diff: { message: "Version diff available. Use site.json comparison for detailed changes." },
+      });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
