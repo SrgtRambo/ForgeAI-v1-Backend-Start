@@ -7,35 +7,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { createForgeCloud, loadForgeProjects, type SyncState } from "@/lib/forge-cloud";
 import { profileQueryOptions } from "@/lib/profile";
 
-const FORGE_VERSION = "2";
-const FORGE_SCRIPTS = [
-  "architect.js",
-  "ai-provider.js",
-  "generator.js",
-  "testing.js",
-  "sample-projects.js",
-  "app.js",
-];
+const FORGE_VERSION = "3";
+const FORGE_SCRIPTS = ["architect.js", "ai-provider.js", "generator.js", "testing.js", "sample-projects.js", "app.js"];
 
 export const Route = createFileRoute("/_authenticated/studio")({
   head: () => ({
     meta: [
       { title: "Studio — Forge AI" },
-      {
-        name: "description",
-        content: "Plan, generate, preview, and test custom business software with Forge AI.",
-      },
+      { name: "description", content: "Plan, generate, preview, and test custom business software with Forge AI." },
       { property: "og:title", content: "Studio — Forge AI" },
-      {
-        property: "og:description",
-        content: "Plan, generate, preview, and test custom business software with Forge AI.",
-      },
+      { property: "og:description", content: "Plan, generate, preview, and test custom business software with Forge AI." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  loader: ({ context }) =>
-    context.queryClient.ensureQueryData(profileQueryOptions(context.user.id)),
+  loader: ({ context }) => context.queryClient.ensureQueryData(profileQueryOptions(context.user.id)),
   component: StudioPage,
 });
 
@@ -58,9 +44,7 @@ function StudioPage() {
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [slot, setSlot] = useState<HTMLElement | null>(null);
-  const [sync, setSync] = useState<{ state: SyncState; message?: string | undefined }>({
-    state: "saved",
-  });
+  const [sync, setSync] = useState<{ state: SyncState; message?: string | undefined }>({ state: "saved" });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -83,9 +67,7 @@ function StudioPage() {
       ]);
       if (cancelled || !hostRef.current) return;
       hostRef.current.innerHTML = markup;
-      window.ForgeCloud = createForgeCloud(user.id, projects, (state, message) =>
-        setSync({ state, message }),
-      );
+      window.ForgeCloud = createForgeCloud(user.id, projects, (state, message) => setSync({ state, message }));
       for (const file of FORGE_SCRIPTS) {
         if (cancelled) return;
         added.push(await loadScript(`/forge/${file}?v=${FORGE_VERSION}`));
@@ -127,12 +109,7 @@ function StudioPage() {
   }
 
   const name = profile.display_name || user.email || "Your account";
-  const syncLabel =
-    sync.state === "saving"
-      ? "SAVING…"
-      : sync.state === "error"
-        ? "NOT SAVED — RETRYING ON NEXT CHANGE"
-        : "ALL CHANGES SAVED";
+  const syncLabel = sync.state === "saving" ? "SAVING…" : sync.state === "error" ? "NOT SAVED — RETRYING ON NEXT CHANGE" : "ALL CHANGES SAVED";
 
   return (
     <>
@@ -145,10 +122,7 @@ function StudioPage() {
         <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background px-6 text-center">
           <h1 className="text-xl font-semibold">Your studio didn't load</h1>
           <p className="max-w-md text-sm text-muted-foreground">{loadError}</p>
-          <button
-            className="text-sm text-primary underline"
-            onClick={() => window.location.reload()}
-          >
+          <button className="text-sm text-primary underline" onClick={() => window.location.reload()}>
             Try again
           </button>
         </div>
@@ -157,24 +131,13 @@ function StudioPage() {
       {slot &&
         createPortal(
           <>
-            <span
-              className={`sync-state${sync.state === "error" ? " error" : ""}`}
-              title={sync.message}
-              role="status"
-            >
+            <span className={`sync-state${sync.state === "error" ? " error" : ""}`} title={sync.message} role="status">
               {syncLabel}
             </span>
             <span className="account-name" title={user.email ?? undefined}>
               {name}
             </span>
-            <a
-              className="btn"
-              href="/account"
-              onClick={(e) => {
-                e.preventDefault();
-                void navigate({ to: "/account" });
-              }}
-            >
+            <a className="btn" href="/account" onClick={(e) => { e.preventDefault(); void navigate({ to: "/account" }); }}>
               Account
             </a>
             <button type="button" className="btn" onClick={() => void signOut()}>
