@@ -1655,6 +1655,40 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Bulk project operations ----------
+
+  app.post(
+    "/api/projects/bulk",
+    requireUser,
+    handle(async (req, res) => {
+      const { action, ids } = req.body || {};
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ error: "ids array is required." });
+      }
+      if (!["delete", "archive", "unarchive", "favorite"].includes(action)) {
+        return res.status(400).json({ error: "Invalid action." });
+      }
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      let affected = 0;
+      for (const id of ids) {
+        if (action === "delete") {
+          const r = await db.query(`delete from projects where id = $1 and user_id = $2 returning id`, [id, req.user.id]);
+          affected += r.length;
+        } else if (action === "archive") {
+          const r = await db.query(`update projects set is_archived = true where id = $1 and user_id = $2 returning id`, [id, req.user.id]);
+          affected += r.length;
+        } else if (action === "unarchive") {
+          const r = await db.query(`update projects set is_archived = false where id = $1 and user_id = $2 returning id`, [id, req.user.id]);
+          affected += r.length;
+        } else if (action === "favorite") {
+          const r = await db.query(`update projects set is_favorite = true where id = $1 and user_id = $2 returning id`, [id, req.user.id]);
+          affected += r.length;
+        }
+      }
+      res.json({ action, affected });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
