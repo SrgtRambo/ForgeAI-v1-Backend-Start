@@ -1576,6 +1576,25 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Feedback ----------
+
+  app.post(
+    "/api/feedback",
+    requireUser,
+    handle(async (req, res) => {
+      const { type, content, page } = req.body || {};
+      if (!content || typeof content !== "string" || content.trim().length === 0) {
+        return res.status(400).json({ error: "content is required." });
+      }
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const row = await db.query(
+        `insert into feedback (user_id, type, content, page) values ($1, $2, $3, $4) returning id, created_at`,
+        [req.user.id, type || "general", content.trim(), page || null],
+      );
+      res.status(201).json({ feedback: row[0] });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
