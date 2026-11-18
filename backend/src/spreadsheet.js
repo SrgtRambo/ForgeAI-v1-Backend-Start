@@ -72,6 +72,18 @@ export async function buildWorkbook({ name, sheets }) {
     if (sheetDef.freeze) {
       ws.views = [{ state: "frozen", xSplit: sheetDef.freeze.x || 0, ySplit: sheetDef.freeze.y || 1 }];
     }
+
+    // Charts
+    if (sheetDef.charts) {
+      for (const chart of sheetDef.charts) {
+        ws.addChart(chart.type || "bar", {
+          title: chart.title || "Chart",
+          tl: chart.tl || { col: 0, row: 0 },
+          ext: chart.ext || { width: 400, height: 250 },
+          series: chart.series || [],
+        });
+      }
+    }
   }
 
   return wb;
