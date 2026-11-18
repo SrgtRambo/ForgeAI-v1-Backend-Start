@@ -1,3 +1,39 @@
-run = "cd backend && npm start"
-language = "nodejs"
-nix = true
+modules = ["nodejs-20", "web", "postgresql-16"]
+
+[nix]
+channel = "stable-25_05"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start backend"
+
+[[workflows.workflow]]
+name = "Start backend"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd backend && npm start"
+waitForPort = 4000
+
+[[ports]]
+localPort = 4000
+externalPort = 80
+
+[userenv]
+
+[userenv.shared]
+ALLOW_FREE_GENERATION = "true"
+
+[deployment]
+deploymentTarget = "vm"
+run = ["bash", "-lc", "PORT=4000 node backend/src/server.js"]
+build = ["cd backend && npm install"]
