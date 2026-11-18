@@ -71,6 +71,16 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-success: var(--success);
+  --color-primary-glow: var(--primary-glow);
+  --color-surface: var(--surface);
+  --color-ex-sushi: var(--ex-sushi);
+  --color-ex-sushi-soft: var(--ex-sushi-soft);
+  --color-ex-plumb: var(--ex-plumb);
+  --color-ex-plumb-soft: var(--ex-plumb-soft);
+  --color-ex-boutique: var(--ex-boutique);
+  --color-ex-boutique-soft: var(--ex-boutique-soft);
+  --color-star: var(--star);
+  --font-inter: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -176,6 +186,111 @@
 
 @media (prefers-reduced-motion: reduce) {
   .animate-rise {
+    animation: none;
+  }
+}
+
+/* ---------- Marketing landing page (scoped so the Studio and sign-in keep their look) ---------- */
+.landing {
+  --background: oklch(0.13 0.008 285); /* #0a0a0f */
+  --surface: oklch(0.22 0.04 285); /* #1a1a2e */
+  --card: oklch(0.19 0.03 285);
+  --card-foreground: oklch(0.92 0.005 286);
+  --foreground: oklch(0.92 0.005 286); /* #e4e4e7 */
+  --muted: oklch(0.2 0.02 285);
+  --muted-foreground: oklch(0.7 0.015 286);
+  --primary: oklch(0.585 0.233 277); /* #6366f1 */
+  --primary-glow: oklch(0.606 0.25 292); /* #8b5cf6 */
+  --primary-foreground: oklch(0.99 0.005 285);
+  --border: oklch(0.27 0.03 285);
+  --input: oklch(0.3 0.03 285);
+  --ring: oklch(0.606 0.25 292);
+  --accent: oklch(0.24 0.05 285);
+  --accent-foreground: oklch(0.92 0.005 286);
+  --star: oklch(0.82 0.15 85);
+  --ex-sushi: oklch(0.6 0.19 25);
+  --ex-sushi-soft: oklch(0.95 0.02 60);
+  --ex-plumb: oklch(0.55 0.15 245);
+  --ex-plumb-soft: oklch(0.96 0.015 240);
+  --ex-boutique: oklch(0.45 0.05 40);
+  --ex-boutique-soft: oklch(0.94 0.025 70);
+  --gradient-accent: linear-gradient(135deg, var(--primary), var(--primary-glow));
+  --shadow-accent: 0 0 0 1px color-mix(in oklab, var(--primary-glow) 40%, transparent),
+    0 10px 40px -10px color-mix(in oklab, var(--primary-glow) 60%, transparent);
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter);
+}
+
+.landing h1,
+.landing h2,
+.landing h3 {
+  font-family: var(--font-display);
+}
+
+@utility bg-accent-gradient {
+  background-image: var(--gradient-accent);
+}
+
+@utility text-accent-gradient {
+  background-image: var(--gradient-accent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility glow-hover {
+  transition:
+    box-shadow 0.25s ease,
+    transform 0.25s ease,
+    background-color 0.25s ease,
+    border-color 0.25s ease;
+  &:hover {
+    box-shadow: var(--shadow-accent);
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes mesh-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(6%, -4%, 0) scale(1.12);
+  }
+  100% {
+    transform: translate3d(-4%, 3%, 0) scale(0.96);
+  }
+}
+
+@utility animate-mesh {
+  animation: mesh-drift 18s ease-in-out infinite alternate;
+}
+
+@utility animate-mesh-slow {
+  animation: mesh-drift 26s ease-in-out infinite alternate-reverse;
+}
+
+/* Scroll-linked fade-in, CSS only. Browsers without scroll timelines just show the content. */
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: forge-rise linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 60%;
+  }
+}
+
+html:has(.landing) {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:has(.landing) {
+    scroll-behavior: auto;
+  }
+  .reveal,
+  .animate-mesh,
+  .animate-mesh-slow {
     animation: none;
   }
 }
