@@ -1411,6 +1411,20 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Rate limit status ----------
+
+  app.get(
+    "/api/rate-limit/status",
+    requireUser,
+    handle(async (req, res) => {
+      res.json({
+        windowMs: 15 * 60 * 1000,
+        maxRequests: 200,
+        message: "Rate limit: 200 requests per 15 minutes per IP.",
+      });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
