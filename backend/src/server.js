@@ -2393,6 +2393,70 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Site health score ----------
+
+  app.get(
+    "/api/site/health-score/:briefId",
+    requireUser,
+    handle(async (req, res) => {
+      const { briefId } = req.params;
+      const rows = await db.query(
+        `select spec from site_briefs where id = $1 and user_id = $2`,
+        [briefId, req.user.id],
+      );
+      if (!rows[0]) return res.status(404).json({ error: "Brief not found." });
+      const spec = rows[0].spec;
+      // Calculate a health score based on spec completeness
+      let score = 0;
+      const maxScore = 100;
+      const checks = [];
+
+      if (spec.meta?.businessName) { score += 10; checks.push({ name: "Business name", weight: 10, passed: true }); }
+      else checks.push({ name: "Business name", weight: 10, passed: false });
+
+      if (spec.meta?.description || spec.meta?.tagline) { score += 10; checks.push({ name: "Description", weight: 10, passed: true }); }
+      else checks.push({ name: "Description", weight: 10, passed: false });
+
+      if (spec.pages && spec.pages.length > 0) { score += 15; checks.push({ name: "Pages", weight: 15, passed: true }); }
+      else checks.push({ name: "Pages", weight: 15, passed: false });
+
+      if (spec.design?.palette) { score += 10; checks.push({ name: "Color palette", weight: 10, passed: true }); }
+      else checks.push({ name: "Color palette", weight: 10, passed: false });
+
+      if (spec.design?.fonts) { score += 10; checks.push({ name: "Typography", weight: 10, passed: true }); }
+      else checks.push({ name: "Typography", weight: 10, passed: false });
+
+      const hasNav = spec.pages?.some((p) => p.sections?.some((s) => s.type === "nav"));
+      if (hasNav) { score += 10; checks.push({ name: "Navigation", weight: 10, passed: true }); }
+      else checks.push({ name: "Navigation", weight: 10, passed: false });
+
+      const hasFooter = spec.pages?.some((p) => p.sections?.some((s) => s.type === "footer"));
+      if (hasFooter) { score += 10; checks.push({ name: "Footer", weight: 10, passed: true }); }
+      else checks.push({ name: "Footer", weight: 10, passed: false });
+
+      const hasContact = spec.pages?.some((p) => p.sections?.some((s) => s.type === "contact"));
+      if (hasContact) { score += 10; checks.push({ name: "Contact section", weight: 10, passed: true }); }
+      else checks.push({ name: "Contact section", weight: 10, passed: false });
+
+      const hasHero = spec.pages?.some((p) => p.sections?.some((s) => s.type === "hero"));
+      if (hasHero) { score += 10; checks.push({ name: "Hero section", weight: 10, passed: true }); }
+      else checks.push({ name: "Hero section", weight: 10, passed: false });
+
+      const hasCta = spec.pages?.some((p) => p.sections?.some((s) => s.type === "cta"));
+      if (hasCta) { score += 5; checks.push({ name: "Call to action", weight: 5, passed: true }); }
+      else checks.push({ name: "Call to action", weight: 5, passed: false });
+
+      res.json({
+        briefId,
+        score,
+        maxScore,
+        grade: score >= 90 ? "A" : score >= 80 ? "B" : score >= 70 ? "C" : score >= 60 ? "D" : "F",
+        checks,
+        calculatedAt: new Date().toISOString(),
+      });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
