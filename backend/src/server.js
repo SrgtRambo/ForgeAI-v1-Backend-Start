@@ -1366,6 +1366,30 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Export all user data (GDPR) ----------
+
+  app.get(
+    "/api/users/me/export",
+    requireUser,
+    handle(async (req, res) => {
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const user = await db.query(`select id, name, email, created_at from users where id = $1`, [req.user.id]);
+      const projects = await db.query(`select id, name, stage, data, type, version, created_at, updated_at from projects where user_id = $1`, [req.user.id]);
+      const purchases = await db.query(`select id, type, tier, prompt, amount_cents, status, project_name, file_count, created_at from purchases where user_id = $1`, [req.user.id]);
+      const briefs = await db.query(`select id, input, analysis, spec, created_at, updated_at from site_briefs where user_id = $1`, [req.user.id]);
+      const exportData = {
+        user: user[0],
+        projects,
+        purchases,
+        briefs,
+        exportedAt: new Date().toISOString(),
+      };
+      res.setHeader("Content-Disposition", `attachment; filename="forge-data-export.json"`);
+      res.setHeader("Content-Type", "application/json");
+      res.send(JSON.stringify(exportData, null, 2));
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
