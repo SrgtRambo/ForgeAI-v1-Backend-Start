@@ -1,5 +1,5 @@
 // Server-only Forge AI handler: proxies to the Forge AI backend.
-// No Supabase dependency — auth is handled by Replit headers on the backend.
+// Auth is handled by Replit headers on the backend.
 
 const BACKEND_URL = (process.env["VITE_BACKEND_URL"] || process.env["BACKEND_URL"] || "").replace(/\/$/, "");
 

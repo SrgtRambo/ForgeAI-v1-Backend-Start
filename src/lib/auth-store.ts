@@ -1,6 +1,6 @@
 // Single source of truth for the browser session. The root route owns the only
 // session state and pushes changes here.
-// Replit-native: no Supabase dependency.
+// Replit-native auth store.
 import { useSyncExternalStore } from "react";
 
 type AuthSnapshot = { session: { user: { id: string; email?: string } } | null; ready: boolean };

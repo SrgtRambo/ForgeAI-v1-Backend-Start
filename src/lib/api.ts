@@ -1,4 +1,4 @@
-// Replit-native API client. Replaces the Supabase client entirely.
+// Replit-native API client.
 // Calls the Forge AI backend directly via fetch.
 const BACKEND_URL = import.meta.env["VITE_BACKEND_URL"] || "";
 
