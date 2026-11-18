@@ -90,6 +90,12 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
   const app = express();
   const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200, standardHeaders: true, legacyHeaders: false });
   app.use('/api/', apiLimiter);
+  app.use((req, _res, next) => {
+    if (req.path.startsWith('/api/')) {
+      console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+    }
+    next();
+  });
   app.disable("x-powered-by");
 
   app.use((req, res, next) => {
