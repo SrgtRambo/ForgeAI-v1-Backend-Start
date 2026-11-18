@@ -1199,6 +1199,23 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Site preview (built HTML) ----------
+
+  app.get(
+    "/api/site/briefs/:id/preview",
+    requireUser,
+    handle(async (req, res) => {
+      const rows = await db.query(
+        `select spec from site_briefs where id = $1 and user_id = $2`,
+        [req.params.id, req.user.id],
+      );
+      if (!rows[0]) return res.status(404).json({ error: "Brief not found." });
+      const spec = rows[0].spec;
+      // Return spec and a flag indicating preview is available
+      res.json({ briefId: req.params.id, spec, previewAvailable: true });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
