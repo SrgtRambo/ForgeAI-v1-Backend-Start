@@ -1689,6 +1689,51 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Webhooks ----------
+
+  app.get(
+    "/api/webhooks",
+    requireUser,
+    handle(async (req, res) => {
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const rows = await db.query(
+        `select id, url, events, active, created_at from webhooks where user_id = $1 order by created_at desc`,
+        [req.user.id],
+      );
+      res.json({ webhooks: rows });
+    }),
+  );
+
+  app.post(
+    "/api/webhooks",
+    requireUser,
+    handle(async (req, res) => {
+      const { url, events } = req.body || {};
+      if (!url || typeof url !== "string") {
+        return res.status(400).json({ error: "url is required." });
+      }
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const secret = crypto.randomUUID();
+      const row = await db.query(
+        `insert into webhooks (user_id, url, events, secret) values ($1, $2, $3, $4) returning id, url, events, active, created_at`,
+        [req.user.id, url, events || [], secret],
+      );
+      res.status(201).json({ webhook: row[0], secret });
+    }),
+  );
+
+  app.delete(
+    "/api/webhooks/:id",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.params;
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const rows = await db.query(`delete from webhooks where id = $1 and user_id = $2 returning id`, [id, req.user.id]);
+      if (!rows[0]) return res.status(404).json({ error: "Webhook not found." });
+      res.json({ deleted: true });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(

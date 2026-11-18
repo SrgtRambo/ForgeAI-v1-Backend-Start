@@ -217,3 +217,16 @@ create table if not exists project_activity (
 
 create index if not exists project_activity_project_id_idx on project_activity(project_id);
 create index if not exists project_activity_created_at_idx on project_activity(created_at desc);
+
+-- Webhooks for external integrations.
+create table if not exists webhooks (
+  id uuid primary key default gen_random_uuid(),
+  user_id text not null references users(id),
+  url text not null,
+  events text[] not null default '{}',
+  secret text,
+  active boolean not null default true,
+  created_at timestamptz default now()
+);
+
+create index if not exists webhooks_user_id_idx on webhooks(user_id);
