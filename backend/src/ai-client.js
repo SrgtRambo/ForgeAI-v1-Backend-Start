@@ -37,10 +37,27 @@ const PROVIDERS = [
 function buildProviders() {
   const providers = [];
   for (const p of PROVIDERS) {
-    const key = process.env[p.keyEnv] || "";
+    // Support multiple keys: comma-separated (GROQ_API_KEY=key1,key2,key3)
+    // or numbered (GROQ_API_KEY_2, GROQ_API_KEY_3, etc.)
+    const keys = [];
+    const primary = process.env[p.keyEnv] || "";
+    if (primary.trim()) {
+      keys.push(...primary.split(",").map((k) => k.trim()).filter(Boolean));
+    }
+    // Check for numbered variants
+    for (let i = 2; i <= 10; i++) {
+      const extra = process.env[`${p.keyEnv}_${i}`];
+      if (extra && extra.trim()) keys.push(extra.trim());
+    }
     // Kilo doesn't require a key; always available as free fallback
-    if (p.requiresKey && !key.trim()) continue;
-    providers.push({ ...p, key: key.trim() });
+    if (p.requiresKey && !keys.length) continue;
+    if (!p.requiresKey) {
+      providers.push({ ...p, key: keys[0] || "", name: p.name });
+    } else {
+      for (const key of keys) {
+        providers.push({ ...p, key, name: `${p.name}` });
+      }
+    }
   }
   // Also support custom OpenAI-compatible endpoint
   const customEndpoint = process.env.AI_ENDPOINT;
