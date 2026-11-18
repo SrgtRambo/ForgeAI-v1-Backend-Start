@@ -1832,6 +1832,55 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Site validation (full QA) ----------
+
+  app.post(
+    "/api/site/validate/:briefId",
+    requireUser,
+    handle(async (req, res) => {
+      const { briefId } = req.params;
+      const rows = await db.query(
+        `select spec from site_briefs where id = $1 and user_id = $2`,
+        [briefId, req.user.id],
+      );
+      if (!rows[0]) return res.status(404).json({ error: "Brief not found." });
+      const spec = rows[0].spec;
+      // Run basic validation on spec structure
+      const issues = [];
+      const checks = [];
+      if (!spec.pages || spec.pages.length === 0) {
+        issues.push("No pages defined");
+      } else {
+        checks.push({ name: "Has pages", status: "pass" });
+      }
+      if (!spec.meta?.businessName) {
+        issues.push("Missing business name");
+      } else {
+        checks.push({ name: "Has business name", status: "pass" });
+      }
+      if (!spec.design?.palette) {
+        issues.push("Missing color palette");
+      } else {
+        checks.push({ name: "Has color palette", status: "pass" });
+      }
+      // Check for forbidden phrases
+      const allText = JSON.stringify(spec).toLowerCase();
+      const banned = ["lorem ipsum", "placeholder", "TODO", "undefined"];
+      for (const b of banned) {
+        if (allText.includes(b)) issues.push(`Banned phrase: ${b}`);
+      }
+      checks.push({ name: "No banned phrases", status: issues.some((i) => i.includes("Banned")) ? "warn" : "pass" });
+
+      res.json({
+        briefId,
+        passed: issues.length === 0,
+        issues,
+        checks,
+        validatedAt: new Date().toISOString(),
+      });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
