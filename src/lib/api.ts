@@ -244,6 +244,15 @@ export async function exportProject(id: string) {
   return res.blob();
 }
 
+export async function importProject(body: { name: string; stage?: string; data?: any; type?: string }) {
+  const res = await apiRequest("/api/projects/import", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  return data.project as ApiProject;
+}
+
 export async function healthCheck() {
   const res = await apiRequest("/health");
   return res.json();

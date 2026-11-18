@@ -1247,6 +1247,26 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Project import ----------
+
+  app.post(
+    "/api/projects/import",
+    requireUser,
+    handle(async (req, res) => {
+      const { name, stage, data, type } = req.body || {};
+      if (!name || typeof name !== "string") {
+        return res.status(400).json({ error: "name is required." });
+      }
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const newId = `proj_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+      const row = await db.query(
+        `insert into projects (id, user_id, name, stage, data, type, version) values ($1, $2, $3, $4, $5, $6, 1) returning id, name, stage, data, updated_at, version`,
+        [newId, req.user.id, name, stage || "", data || {}, type || null],
+      );
+      res.status(201).json({ project: row[0] });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
