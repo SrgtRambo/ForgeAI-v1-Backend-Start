@@ -1881,6 +1881,25 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Getting started guide ----------
+
+  app.get("/api/onboarding/steps", requireUser, handle(async (req, res) => {
+    await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+    const projects = await db.query(`select count(*) as c from projects where user_id = $1`, [req.user.id]);
+    const briefs = await db.query(`select count(*) as c from site_briefs where user_id = $1`, [req.user.id]);
+    const projectCount = parseInt(projects[0]?.c || 0);
+    const briefCount = parseInt(briefs[0]?.c || 0);
+    const steps = [
+      { id: "profile", title: "Complete your profile", done: !!(req.user.name), action: "/account" },
+      { id: "first-project", title: "Create your first project", done: projectCount > 0, action: "/projects" },
+      { id: "first-site", title: "Generate your first website", done: briefCount > 0, action: "/studio" },
+      { id: "share", title: "Share a project", done: false, action: "/projects" },
+      { id: "download", title: "Download a deliverable", done: false, action: "/projects" },
+    ];
+    const completedCount = steps.filter((s) => s.done).length;
+    res.json({ steps, completedCount, totalCount: steps.length, progress: Math.round((completedCount / steps.length) * 100) });
+  }));
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
