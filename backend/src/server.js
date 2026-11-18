@@ -795,10 +795,15 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     requireUser,
     handle(async (req, res) => {
       await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
-      const rows = await db.query(
-        `select id, name, stage, data, updated_at from projects where user_id = $1 order by updated_at desc`,
-        [req.user.id],
-      );
+      const search = req.query.q;
+      let sql = `select id, name, stage, data, updated_at, share_token, visibility, type, version, created_at from projects where user_id = $1`;
+      const params = [req.user.id];
+      if (search && typeof search === "string") {
+        sql += ` and (name ilike $2 or stage ilike $2)`;
+        params.push(`%${search}%`);
+      }
+      sql += ` order by updated_at desc`;
+      const rows = await db.query(sql, params);
       res.json({ projects: rows.map((r) => ({ id: r.id, name: r.name, stage: r.stage, data: r.data, updated_at: r.updated_at })) });
     }),
   );
