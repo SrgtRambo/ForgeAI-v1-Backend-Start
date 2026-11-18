@@ -1948,6 +1948,29 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Bulk data export ----------
+
+  app.get(
+    "/api/export/all",
+    requireUser,
+    handle(async (req, res) => {
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const JSZip = (await import("jszip")).default;
+      const zip = new JSZip();
+      const projects = await db.query(`select * from projects where user_id = $1`, [req.user.id]);
+      const briefs = await db.query(`select * from site_briefs where user_id = $1`, [req.user.id]);
+      const purchases = await db.query(`select id, type, tier, status, project_name, created_at from purchases where user_id = $1`, [req.user.id]);
+      zip.file("projects.json", JSON.stringify(projects, null, 2));
+      zip.file("briefs.json", JSON.stringify(briefs, null, 2));
+      zip.file("purchases.json", JSON.stringify(purchases, null, 2));
+      zip.file("exported_at.txt", new Date().toISOString());
+      const buffer = await zip.generateAsync({ type: "nodebuffer" });
+      res.setHeader("Content-Disposition", `attachment; filename="forge-export-all.zip"`);
+      res.setHeader("Content-Type", "application/zip");
+      res.send(buffer);
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
