@@ -2249,6 +2249,42 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Site export as single HTML ----------
+
+  app.get(
+    "/api/site/export-html/:briefId",
+    requireUser,
+    handle(async (req, res) => {
+      const { briefId } = req.params;
+      const rows = await db.query(
+        `select spec from site_briefs where id = $1 and user_id = $2`,
+        [briefId, req.user.id],
+      );
+      if (!rows[0]) return res.status(404).json({ error: "Brief not found." });
+      const spec = rows[0].spec;
+      const businessName = spec.meta?.businessName || "Site";
+      // Build a simple single-file HTML export
+      const html = `<!DOCTYPE html>
+<html lang="${spec.meta?.locale || "en"}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${businessName}</title>
+  <meta name="description" content="${spec.meta?.description || spec.meta?.tagline || businessName}">
+  <style>body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; }</style>
+</head>
+<body>
+  <h1>${businessName}</h1>
+  <p>${spec.meta?.tagline || spec.meta?.description || ""}</p>
+  <p><em>Exported from Forge AI. Full multi-page site available via download.</em></p>
+</body>
+</html>`;
+      res.setHeader("Content-Disposition", `attachment; filename="${businessName.replace(/[^a-z0-9]/gi, "_")}.html"`);
+      res.setHeader("Content-Type", "text/html");
+      res.send(html);
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
