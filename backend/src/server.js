@@ -2602,6 +2602,23 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Archive site brief ----------
+
+  app.patch(
+    "/api/site/briefs/:id/archive",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.params;
+      const { archived } = req.body || {};
+      const rows = await db.query(
+        `update site_briefs set is_archived = $1, updated_at = now() where id = $2 and user_id = $3 returning id, is_archived`,
+        [archived !== false, id, req.user.id],
+      );
+      if (!rows[0]) return res.status(404).json({ error: "Brief not found." });
+      res.json({ brief: rows[0] });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
