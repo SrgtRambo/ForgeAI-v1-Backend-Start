@@ -1346,6 +1346,26 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     res.json({ template: t });
   });
 
+  // ---------- Project statistics ----------
+
+  app.get(
+    "/api/projects/stats",
+    requireUser,
+    handle(async (req, res) => {
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const total = await db.query(`select count(*) as c from projects where user_id = $1`, [req.user.id]);
+      const shared = await db.query(`select count(*) as c from projects where user_id = $1 and visibility != 'private'`, [req.user.id]);
+      const byType = await db.query(`select type, count(*) as c from projects where user_id = $1 group by type`, [req.user.id]);
+      const recent = await db.query(`select count(*) as c from projects where user_id = $1 and updated_at > now() - interval '7 days'`, [req.user.id]);
+      res.json({
+        total: parseInt(total[0]?.c || 0),
+        shared: parseInt(shared[0]?.c || 0),
+        recentWeek: parseInt(recent[0]?.c || 0),
+        byType: byType.map((r) => ({ type: r.type, count: parseInt(r.c) })),
+      });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(

@@ -269,6 +269,11 @@ export async function getSiteTemplates() {
   return res.json();
 }
 
+export async function getProjectStats() {
+  const res = await apiRequest("/api/projects/stats");
+  return res.json();
+}
+
 export async function healthCheck() {
   const res = await apiRequest("/health");
   return res.json();
