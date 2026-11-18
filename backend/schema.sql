@@ -100,6 +100,7 @@ create table if not exists projects (
 
 create index if not exists projects_user_id_idx on projects(user_id);
 alter table projects add column if not exists is_favorite boolean not null default false;
+alter table projects add column if not exists is_archived boolean not null default false;
 -- Organization support for multi-tenant isolation (future)
 alter table projects add column if not exists organization_id text;
 create index if not exists projects_updated_at_idx on projects(updated_at desc);
