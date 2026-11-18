@@ -1595,6 +1595,28 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Search published sites ----------
+
+  app.get(
+    "/api/sites/search",
+    handle(async (req, res) => {
+      const q = req.query.q;
+      if (!q || typeof q !== "string" || q.trim().length < 2) {
+        return res.status(400).json({ error: "Query must be at least 2 characters." });
+      }
+      const rows = await db.query(
+        `select sb.id, sb.spec->>'meta' as meta, p.published_url, p.published_at
+         from site_briefs sb
+         join purchases p on p.brief_id = sb.id
+         where p.published_url is not null
+           and (sb.spec->'meta'->>'businessName' ilike $1 or sb.spec->'meta'->>'description' ilike $1)
+         order by p.published_at desc limit 20`,
+        [`%${q}%`],
+      );
+      res.json({ results: rows });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
