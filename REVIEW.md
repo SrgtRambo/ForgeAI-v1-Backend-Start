@@ -16,20 +16,21 @@ Complete 10-phase backend build for Forge AI: an AI-powered site generation syst
 | Image pipeline | `backend/src/site/images/` | Unsplash + Pexels providers, resolution, placeholder handling |
 | Builder | `backend/src/site/build.js` | Spec → static files (HTML, CSS, JS, images, credits, README, sitemap, robots) |
 | Generation engine | `backend/src/engine.js` | Multi-file planning + writing with continuation support |
-| Job runner | `backend/src/jobs.js` | Background generation, zip packaging, Supabase storage upload |
-| API server | `backend/src/server.js` | Express routes: catalog, checkout, generate-free, purchases, download, webhook |
+| Job runner | `backend/src/jobs.js` | Background generation, zip packaging, Replit Object Storage upload |
+| API server | `backend/src/server.js` | Express routes: catalog, checkout, generate-free, purchases, download, webhook, site briefs, image slots, preview |
 | Order validation | `backend/src/orders.js` | Prompt/tier/type validation |
 | Pricing | `backend/src/pricing.js` | Tiers, limits, prompt char limits |
 | Packager | `backend/src/packager.js` | In-memory zip build (JSZip) |
-| Database schema | `backend/schema.sql` | purchases table, RLS policies |
+| Database schema | `backend/schema.sql` | users, purchases, site_briefs, site_image_assets, analysis_usage (plain Postgres) |
 | QA module | `backend/src/qa/index.js` | Playwright render + axe-core + banned text + vision critic |
 | Studio route | `src/routes/_authenticated/studio.tsx` | Loads Forge workspace, sync state, account slot |
+| Infrastructure | `backend/src/infra/db.js`, `infra/storage.js`, `infra/auth.js` | pg DB, Replit Object Storage, Replit Auth headers |
 
 ## Test Coverage
 
-129 tests across 10 test files, 0 failures.
+149 tests across 12 test files, 0 failures.
 
-## Locked Decisions (Do Not Revisit Without Discussion)
+## Locked Design Decisions (Do Not Revisit Without Discussion)
 
 1. **Spec-driven rendering**: All output derives from `site.spec.json` — no ad-hoc templates.
 2. **Static HTML output**: Delivered zips contain plain HTML/CSS/JS, no build step required.
@@ -39,12 +40,23 @@ Complete 10-phase backend build for Forge AI: an AI-powered site generation syst
 6. **Hero heading ≤ 9 words**: Enforced in builder.
 7. **Free tier limit**: 5 analyses per day per user.
 8. **Preview in sandboxed iframe**: Generated sites preview isolated from studio.
-9. **RLS on all tables**: Users only read/write their own purchases.
-10. **No secrets in browser code**: API keys stay behind Supabase RLS + backend routes.
+9. **Ownership enforced in code**: Every query filters by `req.user.id`; returns 404 for other users' rows. No RLS.
+10. **No secrets in browser code**: API keys stay behind backend routes + environment variables.
 
-## Remaining Items (Post-Phase 10)
+## Remaining Items (Post-Phase 8)
 
-- Stripe payments require a paid Lovable plan or user's own Stripe key (see roadmap.md)
-- `.env` must be populated with `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `OPENROUTER_API_KEY` before running `backend/src/server.js`
-- Model slugs from `.env.example` should be verified against openrouter.ai/models
-- QA vision critic requires an OpenRouter vision-capable model (`MODEL_CRITIC`)
+- Stripe payments require a paid plan or user's own Stripe key
+- `.env` must be populated with `DATABASE_URL`, `OPENROUTER_API_KEY`, `UNSPLASH_ACCESS_KEY`, `PEXELS_API_KEY` before running `backend/src/server.js`
+- QA render gate (Phase 7) needs Chromium/Playwright to actually render; currently skipped when unavailable
+- Studio UI (Phase 9) not yet verified
+- Live acceptance (Phase 10) not yet run
+
+## Phase Status
+
+| Phase | Status |
+|-------|--------|
+| 0–6 | Pass |
+| 7 | Not verified (needs Chromium) |
+| 8 | Implemented (149 tests pass) |
+| 9 | Not verified |
+| 10 | Not verified |

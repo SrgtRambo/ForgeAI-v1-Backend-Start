@@ -15,13 +15,17 @@ const PRIVATE_IP_RANGES = [
   /^10\./,
   /^172\.(1[6-9]|2[0-9]|3[0-1])\./,
   /^192\.168\./,
+  /^169\.254\./,
+  /^0\.0\.0\.0$/,
   /^::1$/,
   /^fc00:/,
   /^fe80:/,
+  /^::/,
 ];
 
 function isPrivateOrLoopback(hostname) {
-  return PRIVATE_IP_RANGES.some((re) => re.test(hostname));
+  const h = hostname.replace(/[\[\]]/g, "");
+  return PRIVATE_IP_RANGES.some((re) => re.test(h));
 }
 
 async function fetchWithRetry({ url, headers, timeoutMs = 10_000, retries = 2 }) {

@@ -17,31 +17,17 @@ export function loadConfig() {
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean),
-    supabaseUrl: read("SUPABASE_URL"),
-    supabaseServiceKey: read("SUPABASE_SERVICE_ROLE_KEY"),
-    openrouterKey: read("OPENROUTER_API_KEY"),
     stripeSecretKey: read("STRIPE_SECRET_KEY"),
     stripeWebhookSecret: read("STRIPE_WEBHOOK_SECRET"),
     storageBucket: read("STORAGE_BUCKET", "projects"),
     jobConcurrency: Math.max(1, Number(read("JOB_CONCURRENCY", "2")) || 2),
     allowFreeGeneration: read("ALLOW_FREE_GENERATION", "false") === "true",
+    analysisDailyLimit: Math.max(1, Number(read("ANALYSIS_DAILY_LIMIT", "5")) || 5),
     models: {
       standard: read("MODEL_STANDARD", "google/gemini-2.5-flash"),
       pro: read("MODEL_PRO", "anthropic/claude-sonnet-4.5"),
     },
   };
-  const missing = [
-    ["SUPABASE_URL", config.supabaseUrl],
-    ["SUPABASE_SERVICE_ROLE_KEY", config.supabaseServiceKey],
-    ["OPENROUTER_API_KEY", config.openrouterKey],
-  ]
-    .filter(([, v]) => !v)
-    .map(([k]) => k);
-  if (missing.length) {
-    throw new Error(
-      `Missing required environment variables: ${missing.join(", ")}. Copy .env.example to .env and fill them in.`,
-    );
-  }
   config.paymentsEnabled = Boolean(config.stripeSecretKey && config.stripeWebhookSecret);
   return config;
 }
