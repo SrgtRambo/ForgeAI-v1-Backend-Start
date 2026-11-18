@@ -264,6 +264,11 @@ export async function getSiteStatus(briefId: string) {
   return res.json();
 }
 
+export async function getSiteTemplates() {
+  const res = await apiRequest("/api/site/templates");
+  return res.json();
+}
+
 export async function healthCheck() {
   const res = await apiRequest("/health");
   return res.json();

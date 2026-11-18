@@ -23,6 +23,7 @@ import { validateByType, validateSocialKit, validateWorkflow, validateSpreadshee
 import { buildWorkbook, workbookToBuffer, createDefaultWorkbook } from "./spreadsheet.js";
 import { createSocialKit } from "./social-kit.js";
 import { createWorkflow } from "./workflow.js";
+import { getTemplates, getTemplate } from "./templates.js";
 import { createAppSpec } from "./app-generator.js";
 import { runQA } from "./qa/index.js";
 import { validateSpec } from "./site/spec.js";
@@ -1332,6 +1333,18 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
       });
     }),
   );
+
+  // ---------- Site templates ----------
+
+  app.get("/api/site/templates", (_req, res) => {
+    res.json({ templates: getTemplates() });
+  });
+
+  app.get("/api/site/templates/:id", (req, res) => {
+    const t = getTemplate(req.params.id);
+    if (!t) return res.status(404).json({ error: "Template not found." });
+    res.json({ template: t });
+  });
 
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
