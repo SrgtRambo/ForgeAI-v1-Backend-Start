@@ -267,3 +267,15 @@ create table if not exists recently_viewed (
 
 create index if not exists recently_viewed_user_id_idx on recently_viewed(user_id);
 create index if not exists recently_viewed_viewed_at_idx on recently_viewed(viewed_at desc);
+
+-- Tags for site briefs.
+create table if not exists site_tags (
+  id uuid primary key default gen_random_uuid(),
+  brief_id uuid not null references site_briefs(id) on delete cascade,
+  tag text not null,
+  created_at timestamptz default now(),
+  unique (brief_id, tag)
+);
+
+create index if not exists site_tags_brief_id_idx on site_tags(brief_id);
+create index if not exists site_tags_tag_idx on site_tags(tag);

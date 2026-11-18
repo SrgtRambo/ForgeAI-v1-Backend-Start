@@ -2540,6 +2540,51 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Site tags ----------
+
+  app.get(
+    "/api/site/briefs/:id/tags",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.params;
+      const owner = await db.query(`select id from site_briefs where id = $1 and user_id = $2`, [id, req.user.id]);
+      if (!owner[0]) return res.status(404).json({ error: "Brief not found." });
+      const rows = await db.query(`select tag, created_at from site_tags where brief_id = $1 order by tag`, [id]);
+      res.json({ tags: rows.map((r) => r.tag) });
+    }),
+  );
+
+  app.post(
+    "/api/site/briefs/:id/tags",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.params;
+      const { tag } = req.body || {};
+      if (!tag || typeof tag !== "string") {
+        return res.status(400).json({ error: "tag is required." });
+      }
+      const owner = await db.query(`select id from site_briefs where id = $1 and user_id = $2`, [id, req.user.id]);
+      if (!owner[0]) return res.status(404).json({ error: "Brief not found." });
+      await db.query(
+        `insert into site_tags (brief_id, tag) values ($1, $2) on conflict (brief_id, tag) do nothing`,
+        [id, tag.trim().toLowerCase()],
+      );
+      res.json({ tag: tag.trim().toLowerCase() });
+    }),
+  );
+
+  app.delete(
+    "/api/site/briefs/:id/tags/:tag",
+    requireUser,
+    handle(async (req, res) => {
+      const { id, tag } = req.params;
+      const owner = await db.query(`select id from site_briefs where id = $1 and user_id = $2`, [id, req.user.id]);
+      if (!owner[0]) return res.status(404).json({ error: "Brief not found." });
+      await db.query(`delete from site_tags where brief_id = $1 and tag = $2`, [id, tag]);
+      res.json({ deleted: true });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
