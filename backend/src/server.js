@@ -1267,6 +1267,27 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Duplicate site brief ----------
+
+  app.post(
+    "/api/site/briefs/:id/duplicate",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.params;
+      const rows = await db.query(
+        `select input, analysis, spec from site_briefs where id = $1 and user_id = $2`,
+        [id, req.user.id],
+      );
+      if (!rows[0]) return res.status(404).json({ error: "Brief not found." });
+      const brief = rows[0];
+      const newRows = await db.query(
+        `insert into site_briefs (user_id, input, analysis, spec) values ($1, $2, $3, $4) returning id`,
+        [req.user.id, JSON.stringify(brief.input), JSON.stringify(brief.analysis), JSON.stringify(brief.spec)],
+      );
+      res.status(201).json({ briefId: newRows[0].id });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(

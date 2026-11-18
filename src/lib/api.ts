@@ -253,6 +253,12 @@ export async function importProject(body: { name: string; stage?: string; data?:
   return data.project as ApiProject;
 }
 
+export async function duplicateBrief(briefId: string) {
+  const res = await apiRequest(`/api/site/briefs/${briefId}/duplicate`, { method: "POST" });
+  const data = await res.json();
+  return data.briefId as string;
+}
+
 export async function healthCheck() {
   const res = await apiRequest("/health");
   return res.json();
