@@ -1222,6 +1222,31 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Project export (JSON) ----------
+
+  app.get(
+    "/api/projects/:id/export",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.params;
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const rows = await db.query(
+        `select id, name, stage, data, type, version, created_at, updated_at from projects where id = $1 and user_id = $2`,
+        [id, req.user.id],
+      );
+      if (!rows[0]) return res.status(404).json({ error: "Project not found." });
+      const proj = rows[0];
+      const versions = await db.query(
+        `select version_number, name, stage, created_at from project_versions where project_id = $1 order by version_number`,
+        [id],
+      );
+      const exportData = { ...proj, versions, exportedAt: new Date().toISOString() };
+      res.setHeader("Content-Disposition", `attachment; filename="${proj.name.replace(/[^a-z0-9]/gi, "_")}.json"`);
+      res.setHeader("Content-Type", "application/json");
+      res.send(JSON.stringify(exportData, null, 2));
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(

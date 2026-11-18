@@ -239,6 +239,11 @@ export async function duplicateProject(id: string) {
   return data.project as ApiProject;
 }
 
+export async function exportProject(id: string) {
+  const res = await apiRequest(`/api/projects/${id}/export`);
+  return res.blob();
+}
+
 export async function healthCheck() {
   const res = await apiRequest("/health");
   return res.json();
