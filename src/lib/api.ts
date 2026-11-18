@@ -223,6 +223,11 @@ export async function generateApp(body: { name: string; description?: string; en
   return res.json();
 }
 
+export async function downloadArtifact(key: string) {
+  const res = await apiRequest(`/api/artifacts/download?key=${encodeURIComponent(key)}`);
+  return res.blob();
+}
+
 export async function healthCheck() {
   const res = await apiRequest("/health");
   return res.json();

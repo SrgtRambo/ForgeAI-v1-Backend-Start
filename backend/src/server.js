@@ -1096,6 +1096,29 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Generic artifact download ----------
+
+  app.get(
+    "/api/artifacts/download",
+    requireUser,
+    handle(async (req, res) => {
+      const key = req.query.key;
+      if (!key || typeof key !== "string") return res.status(400).json({ error: "key is required." });
+      // Ensure the key belongs to this user
+      if (!key.startsWith(req.user.id + "/")) return res.status(403).json({ error: "Access denied." });
+      const obj = await storageGet(key);
+      if (!obj) return res.status(404).json({ error: "Artifact not found." });
+      const ext = key.split(".").pop();
+      const ct = ext === "xlsx" ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        : ext === "zip" ? "application/zip"
+        : ext === "json" ? "application/json"
+        : "application/octet-stream";
+      res.setHeader("Content-Disposition", `attachment; filename="${key.split("/").pop()}"`);
+      res.setHeader("Content-Type", ct);
+      res.send(obj.buffer);
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
