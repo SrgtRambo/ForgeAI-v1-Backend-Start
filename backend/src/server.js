@@ -2346,6 +2346,30 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Compare two site briefs ----------
+
+  app.get(
+    "/api/site/compare",
+    requireUser,
+    handle(async (req, res) => {
+      const { a, b } = req.query;
+      if (!a || !b) return res.status(400).json({ error: "Query params 'a' and 'b' (brief IDs) are required." });
+      const rowsA = await db.query(`select spec from site_briefs where id = $1 and user_id = $2`, [a, req.user.id]);
+      const rowsB = await db.query(`select spec from site_briefs where id = $1 and user_id = $2`, [b, req.user.id]);
+      if (!rowsA[0] || !rowsB[0]) return res.status(404).json({ error: "One or both briefs not found." });
+      const specA = rowsA[0].spec;
+      const specB = rowsB[0].spec;
+      res.json({
+        briefA: { id: a, businessName: specA.meta?.businessName, pageCount: specA.pages?.length || 0, sectionCount: specA.pages?.reduce((acc, p) => acc + (p.sections?.length || 0), 0) || 0 },
+        briefB: { id: b, businessName: specB.meta?.businessName, pageCount: specB.pages?.length || 0, sectionCount: specB.pages?.reduce((acc, p) => acc + (p.sections?.length || 0), 0) || 0 },
+        differences: {
+          pagesDiff: (specB.pages?.length || 0) - (specA.pages?.length || 0),
+          sectionsDiff: (specB.pages?.reduce((acc, p) => acc + (p.sections?.length || 0), 0) || 0) - (specA.pages?.reduce((acc, p) => acc + (p.sections?.length || 0), 0) || 0),
+        },
+      });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
