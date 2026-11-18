@@ -162,3 +162,14 @@ create table if not exists audit_log (
 
 create index if not exists audit_log_user_id_idx on audit_log(user_id);
 create index if not exists audit_log_created_at_idx on audit_log(created_at desc);
+
+-- Project comments for collaboration.
+create table if not exists project_comments (
+  id uuid primary key default gen_random_uuid(),
+  project_id text not null references projects(id) on delete cascade,
+  user_id text not null references users(id),
+  content text not null,
+  created_at timestamptz default now()
+);
+
+create index if not exists project_comments_project_id_idx on project_comments(project_id);

@@ -1438,6 +1438,44 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     });
   });
 
+  // ---------- Project comments ----------
+
+  app.get(
+    "/api/projects/:id/comments",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.params;
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const owner = await db.query(`select id from projects where id = $1 and user_id = $2`, [id, req.user.id]);
+      if (!owner[0]) return res.status(404).json({ error: "Project not found." });
+      const rows = await db.query(
+        `select c.id, c.content, c.created_at, u.name, u.email from project_comments c join users u on u.id = c.user_id where c.project_id = $1 order by c.created_at asc`,
+        [id],
+      );
+      res.json({ comments: rows });
+    }),
+  );
+
+  app.post(
+    "/api/projects/:id/comments",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.params;
+      const { content } = req.body || {};
+      if (!content || typeof content !== "string" || content.trim().length === 0) {
+        return res.status(400).json({ error: "content is required." });
+      }
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const owner = await db.query(`select id from projects where id = $1 and user_id = $2`, [id, req.user.id]);
+      if (!owner[0]) return res.status(404).json({ error: "Project not found." });
+      const row = await db.query(
+        `insert into project_comments (project_id, user_id, content) values ($1, $2, $3) returning id, content, created_at`,
+        [id, req.user.id, content.trim()],
+      );
+      res.status(201).json({ comment: row[0] });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
