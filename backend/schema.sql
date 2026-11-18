@@ -254,3 +254,16 @@ create table if not exists site_changelog (
 
 create index if not exists site_changelog_brief_id_idx on site_changelog(brief_id);
 create index if not exists site_changelog_created_at_idx on site_changelog(created_at desc);
+
+-- Recently viewed items for quick access.
+create table if not exists recently_viewed (
+  id uuid primary key default gen_random_uuid(),
+  user_id text not null references users(id),
+  resource_type text not null,
+  resource_id text not null,
+  viewed_at timestamptz default now(),
+  unique (user_id, resource_type, resource_id)
+);
+
+create index if not exists recently_viewed_user_id_idx on recently_viewed(user_id);
+create index if not exists recently_viewed_viewed_at_idx on recently_viewed(viewed_at desc);

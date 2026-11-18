@@ -2313,6 +2313,39 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Recently viewed ----------
+
+  app.post(
+    "/api/recently-viewed",
+    requireUser,
+    handle(async (req, res) => {
+      const { resource_type, resource_id } = req.body || {};
+      if (!resource_type || !resource_id) {
+        return res.status(400).json({ error: "resource_type and resource_id are required." });
+      }
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      await db.query(
+        `insert into recently_viewed (user_id, resource_type, resource_id, viewed_at) values ($1, $2, $3, now())
+         on conflict (user_id, resource_type, resource_id) do update set viewed_at = now()`,
+        [req.user.id, resource_type, resource_id],
+      );
+      res.json({ tracked: true });
+    }),
+  );
+
+  app.get(
+    "/api/recently-viewed",
+    requireUser,
+    handle(async (req, res) => {
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const rows = await db.query(
+        `select resource_type, resource_id, viewed_at from recently_viewed where user_id = $1 order by viewed_at desc limit 20`,
+        [req.user.id],
+      );
+      res.json({ items: rows });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
