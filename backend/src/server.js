@@ -2457,6 +2457,49 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Site recommendations ----------
+
+  app.get(
+    "/api/site/recommendations/:briefId",
+    requireUser,
+    handle(async (req, res) => {
+      const { briefId } = req.params;
+      const rows = await db.query(
+        `select spec from site_briefs where id = $1 and user_id = $2`,
+        [briefId, req.user.id],
+      );
+      if (!rows[0]) return res.status(404).json({ error: "Brief not found." });
+      const spec = rows[0].spec;
+      const recommendations = [];
+
+      if (!spec.pages?.some((p) => p.sections?.some((s) => s.type === "testimonials"))) {
+        recommendations.push({ priority: "high", category: "content", message: "Add testimonials section to build trust" });
+      }
+      if (!spec.pages?.some((p) => p.sections?.some((s) => s.type === "pricing"))) {
+        recommendations.push({ priority: "medium", category: "content", message: "Add pricing section for transparency" });
+      }
+      if (!spec.pages?.some((p) => p.sections?.some((s) => s.type === "faq"))) {
+        recommendations.push({ priority: "medium", category: "content", message: "Add FAQ section to address common questions" });
+      }
+      if (!spec.pages?.some((p) => p.sections?.some((s) => s.type === "cta"))) {
+        recommendations.push({ priority: "high", category: "conversion", message: "Add call-to-action section to drive conversions" });
+      }
+      if ((spec.pages?.length || 0) < 3) {
+        recommendations.push({ priority: "medium", category: "structure", message: "Consider adding more pages (About, Services, Contact)" });
+      }
+      if (!spec.design?.motion || spec.design.motion === "none") {
+        recommendations.push({ priority: "low", category: "design", message: "Add subtle animations for better engagement" });
+      }
+
+      res.json({
+        briefId,
+        recommendations,
+        count: recommendations.length,
+        generatedAt: new Date().toISOString(),
+      });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
