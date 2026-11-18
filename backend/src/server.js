@@ -1,6 +1,7 @@
 // Forge AI backend: Replit-native.
 // Auth via Replit headers; DB via plain Postgres; storage via Replit Object Storage.
 import express from "express";
+import rateLimit from "express-rate-limit";
 import Stripe from "stripe";
 import multer from "multer";
 import sharp from "sharp";
@@ -83,6 +84,8 @@ const upload = multer({
 
 export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, pexels }) {
   const app = express();
+  const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200, standardHeaders: true, legacyHeaders: false });
+  app.use('/api/', apiLimiter);
   app.disable("x-powered-by");
 
   app.use((req, res, next) => {
