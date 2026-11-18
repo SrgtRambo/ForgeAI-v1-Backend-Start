@@ -191,6 +191,14 @@ export async function generateSocialKit(body: { businessName: string; industry?:
   return res.json();
 }
 
+export async function generateWorkflow(body: { name: string; description?: string; steps?: any[] }) {
+  const res = await apiRequest("/api/workflow/generate", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  return res.json();
+}
+
 export async function healthCheck() {
   const res = await apiRequest("/health");
   return res.json();

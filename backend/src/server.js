@@ -21,6 +21,7 @@ import { createAnalyzer } from "./site/analyze.js";
 import { buildSite } from "./site/build.js";
 import { buildWorkbook, workbookToBuffer, createDefaultWorkbook } from "./spreadsheet.js";
 import { createSocialKit } from "./social-kit.js";
+import { createWorkflow } from "./workflow.js";
 import { runQA } from "./qa/index.js";
 import { validateSpec } from "./site/spec.js";
 import { createUnsplashProvider } from "./images/unsplash.js";
@@ -997,6 +998,23 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
       const storagePath = `${req.user.id}/social-kit-${Date.now()}.json`;
       await storagePut(storagePath, Buffer.from(JSON.stringify(kit, null, 2)), "application/json");
       res.json({ kit, storagePath });
+    }),
+  );
+
+  // ---------- Workflow generation ----------
+
+  app.post(
+    "/api/workflow/generate",
+    requireUser,
+    handle(async (req, res) => {
+      const { name, description, steps } = req.body || {};
+      if (!name || typeof name !== "string") {
+        return res.status(400).json({ error: "name is required." });
+      }
+      const workflow = createWorkflow({ name, description, steps });
+      const storagePath = `${req.user.id}/workflow-${Date.now()}.json`;
+      await storagePut(storagePath, Buffer.from(JSON.stringify(workflow, null, 2)), "application/json");
+      res.json({ workflow, storagePath });
     }),
   );
 
