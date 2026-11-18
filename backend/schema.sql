@@ -57,6 +57,7 @@ begin
 end $$;
 
 create index if not exists purchases_user_id_idx on purchases(user_id);
+alter table purchases add column if not exists organization_id text;
 create index if not exists purchases_status_idx on purchases(status);
 create index if not exists purchases_created_at_idx on purchases(created_at desc);
 
@@ -98,6 +99,8 @@ create table if not exists projects (
 );
 
 create index if not exists projects_user_id_idx on projects(user_id);
+-- Organization support for multi-tenant isolation (future)
+alter table projects add column if not exists organization_id text;
 create index if not exists projects_updated_at_idx on projects(updated_at desc);
 
 -- Analysis usage tracking: one row per user per day.
