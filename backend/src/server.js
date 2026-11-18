@@ -1776,6 +1776,42 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Site changelog ----------
+
+  app.get(
+    "/api/site/briefs/:id/changelog",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.params;
+      const owner = await db.query(`select id from site_briefs where id = $1 and user_id = $2`, [id, req.user.id]);
+      if (!owner[0]) return res.status(404).json({ error: "Brief not found." });
+      const rows = await db.query(
+        `select id, change_type, description, diff, created_at from site_changelog where brief_id = $1 order by created_at desc limit 50`,
+        [id],
+      );
+      res.json({ changelog: rows });
+    }),
+  );
+
+  app.post(
+    "/api/site/briefs/:id/changelog",
+    requireUser,
+    handle(async (req, res) => {
+      const { id } = req.params;
+      const { change_type, description, diff } = req.body || {};
+      if (!change_type || typeof change_type !== "string") {
+        return res.status(400).json({ error: "change_type is required." });
+      }
+      const owner = await db.query(`select id from site_briefs where id = $1 and user_id = $2`, [id, req.user.id]);
+      if (!owner[0]) return res.status(404).json({ error: "Brief not found." });
+      const row = await db.query(
+        `insert into site_changelog (brief_id, user_id, change_type, description, diff) values ($1, $2, $3, $4, $5) returning id, created_at`,
+        [id, req.user.id, change_type, description || null, JSON.stringify(diff || {})],
+      );
+      res.status(201).json({ entry: row[0] });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(

@@ -240,3 +240,17 @@ create table if not exists user_preferences (
   email_digest boolean default false,
   updated_at timestamptz default now()
 );
+
+-- Site changelog for tracking spec changes.
+create table if not exists site_changelog (
+  id uuid primary key default gen_random_uuid(),
+  brief_id uuid not null references site_briefs(id) on delete cascade,
+  user_id text references users(id),
+  change_type text not null,
+  description text,
+  diff jsonb,
+  created_at timestamptz default now()
+);
+
+create index if not exists site_changelog_brief_id_idx on site_changelog(brief_id);
+create index if not exists site_changelog_created_at_idx on site_changelog(created_at desc);
