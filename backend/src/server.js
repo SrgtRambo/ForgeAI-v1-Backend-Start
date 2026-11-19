@@ -2768,6 +2768,38 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Software delivery (package and deliver) ----------
+
+  app.post(
+    "/api/software/deliver/:projectId",
+    requireUser,
+    handle(async (req, res) => {
+      const { projectId } = req.params;
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const rows = await db.query(
+        `select id, name, stage, data, type from projects where id = $1 and user_id = $2`,
+        [projectId, req.user.id],
+      );
+      if (!rows[0]) return res.status(404).json({ error: "Project not found." });
+      const proj = rows[0];
+      // Create a delivery record
+      const deliveryId = `del_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+      const JSZip = (await import("jszip")).default;
+      const zip = new JSZip();
+      zip.file("README.md", `# ${proj.name}
+
+Delivered by Forge AI.
+
+Type: ${proj.type || "project"}
+Stage: ${proj.stage || "complete"}`);
+      zip.file("project.json", JSON.stringify(proj.data, null, 2));
+      const buffer = await zip.generateAsync({ type: "nodebuffer" });
+      const storagePath = `${req.user.id}/delivery-${deliveryId}.zip`;
+      await storagePut(storagePath, buffer, "application/zip");
+      res.json({ deliveryId, storagePath, fileName: `${proj.name.replace(/[^a-z0-9]/gi, "_")}_delivery.zip` });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
