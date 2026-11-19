@@ -2659,6 +2659,23 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- AI model status ----------
+
+  app.get("/api/ai/status", requireUser, handle(async (_req, res) => {
+    res.json({
+      configured: config.aiConfigured,
+      providers: config.aiProviders || [],
+      models: {
+        standard: config.modelStandard,
+        pro: config.modelPro,
+        analysis: config.modelAnalysis,
+        spec: config.modelSpec,
+        copy: config.modelCopy,
+        critic: config.modelCritic,
+      },
+    });
+  }));
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
