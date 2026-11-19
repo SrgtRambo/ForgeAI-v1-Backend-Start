@@ -12,7 +12,7 @@ import { loadConfig } from "./config.js";
 import { createJobRunner } from "./jobs.js";
 import { createMultiProviderChat } from "./ai-client.js";
 import { executeInSandbox, isDockerAvailable } from "./sandbox.js";
-import { createWebSocketHandler } from "./ws-handler.js";
+import { initializeWebSocket } from "./ws-handler.js";
 import { OrderError, validateOrder } from "./orders.js";
 import { ARCHETYPES } from "./archetypes.js";
 import { TIERS } from "./pricing.js";

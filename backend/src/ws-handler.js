@@ -1,13 +1,13 @@
 // WebSocket Handler for Forge AI Live Preview
 // Enables real-time preview updates between backend and frontend
 
-const http = require('http');
+import WS from 'ws';
 
-// Create WebSocket server attached to existing HTTP server
+// Create WebSocket server attached to HTTP server
 let wss = null;
 
 export function initializeWebSocket(server) {
-  wss = require('ws').Server({ noServer: true });
+  wss = new WS.Server({ noServer: true });
   
   server.on('upgrade', (request, socket, head) => {
     wss.handleUpgrade(request, socket, head, (ws) => {
@@ -23,8 +23,8 @@ export function initializeWebSocket(server) {
         const data = JSON.parse(message);
         // Broadcast to all connected clients
         wss.clients.forEach((client) => {
-          if (client.readyState === ws.OPEN) {
-            client.send(message);
+          if (client.readyState === WS.OPEN) {
+            client.send(JSON.stringify(data));
           }
         });
       } catch (e) {
@@ -48,8 +48,8 @@ export function initializeWebSocket(server) {
 export function broadcast(message) {
   if (wss) {
     wss.clients.forEach((client) => {
-      if (client.readyState === 1) {
-        client.send(message);
+      if (client.readyState === WS.OPEN) {
+        client.send(JSON.stringify(message));
       }
     });
   }
