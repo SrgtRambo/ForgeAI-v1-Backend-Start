@@ -11,6 +11,7 @@ import crypto from "node:crypto";
 import { loadConfig } from "./config.js";
 import { createJobRunner } from "./jobs.js";
 import { createMultiProviderChat } from "./ai-client.js";
+import { executeInSandbox, isDockerAvailable } from "./sandbox.js";
 import { OrderError, validateOrder } from "./orders.js";
 import { ARCHETYPES } from "./archetypes.js";
 import { TIERS } from "./pricing.js";
@@ -195,7 +196,19 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
       freeGeneration: config.allowFreeGeneration,
       jobs: jobs.size,
       aiProviders: config.aiProviders || [],
+      sandbox: isDockerAvailable(),
     });
+  });
+
+  app.post("/api/sandbox/run", async (req, res) => {
+    const user = await requireUser(req, res);
+    if (!user) return;
+    const { appId, files, command } = req.body || {};
+    if (!files || typeof files !== "object") {
+      return res.status(400).json({ error: "files object required" });
+    }
+    const result = await executeInSandbox(appId || `app-${Date.now()}`, files, { command });
+    res.json(result);
   });
 
   app.get("/api/catalog", (_req, res) => {

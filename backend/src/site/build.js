@@ -112,17 +112,29 @@ function buildCss(spec, usedSections) {
   lines.push("");
   lines.push("/** Base reset */");
   lines.push("*, *::before, *::after { box-sizing: border-box; }");
-  lines.push("html { scroll-behavior: smooth; }");
+  lines.push("html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }");
   lines.push(
-    "body { margin: 0; font-family: var(--font-body); color: var(--ink); background: var(--bg); line-height: 1.6; }",
+    "body { margin: 0; font-family: var(--font-body); color: var(--ink); background: var(--bg); line-height: 1.65; -webkit-font-smoothing: antialiased; }",
   );
-  lines.push("a { color: var(--brand); text-decoration: none; }");
+  lines.push("a { color: var(--brand); text-decoration: none; transition: color 0.2s ease; }");
+  lines.push("a:hover { color: var(--brand-dark, var(--brand)); }");
   lines.push(
     "a:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: var(--radius-sm); }",
   );
-  lines.push("h1, h2, h3 { font-family: var(--font-display); margin-top: 0; }");
+  lines.push("img { max-width: 100%; height: auto; display: block; }");
+  lines.push("h1, h2, h3, h4 { font-family: var(--font-display); margin-top: 0; line-height: 1.25; }");
+  lines.push("p { margin: 0 0 1rem; }");
+  lines.push(
+    "ul, ol { padding-left: 1.5rem; margin: 0 0 1rem; }",
+  );
   lines.push(
     ".sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }",
+  );
+  lines.push(
+    ".container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }",
+  );
+  lines.push(
+    "@media (max-width: 768px) { .container { padding: 0 1rem; } }",
   );
   lines.push("");
   lines.push("/** Section styles (deduplicated) */");
