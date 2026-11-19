@@ -29,6 +29,7 @@ import { generateWorkflowAI } from "./workflow-ai.js";
 import { getProjectTemplates, getProjectTemplate } from "./project-templates.js";
 import { getTemplates, getTemplate } from "./templates.js";
 import { createAppSpec } from "./app-generator.js";
+import { generateAppSpecAI } from "./app-ai.js";
 import { runQA } from "./qa/index.js";
 import { validateSpec } from "./site/spec.js";
 import { createUnsplashProvider } from "./images/unsplash.js";
@@ -1118,7 +1119,12 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
       if (!name || typeof name !== "string") {
         return res.status(400).json({ error: "name is required." });
       }
-      const appSpec = createAppSpec({ name, description, entities, features });
+      let appSpec = null;
+      if (chat) {
+        const aiSpec = await generateAppSpecAI(chat, config.models?.standard || config.modelStandard, name, description, entities);
+        if (aiSpec) appSpec = createAppSpec(aiSpec);
+      }
+      if (!appSpec) appSpec = createAppSpec({ name, description, entities, features });
       const zip = await (await import("jszip")).default().generateAsync({ type: "nodebuffer" });
       // Build zip manually
       const JSZip = (await import("jszip")).default;
