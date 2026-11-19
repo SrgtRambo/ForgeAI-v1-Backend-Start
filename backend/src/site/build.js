@@ -167,6 +167,8 @@ function buildCss(spec, usedSections) {
   }
 
   lines.push("/** App overrides */");
+  lines.push(".container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }");
+  lines.push("@media (max-width: 768px) { .container { padding: 0 1rem; } }");
   lines.push(".form-message { min-height: 1.2em; }");
   lines.push(".success-message { font-weight: 600; color: var(--brand); }");
   lines.push(
