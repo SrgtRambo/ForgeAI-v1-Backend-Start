@@ -48,7 +48,7 @@ export async function buildWorkbook({ name, sheets }) {
     // Data validation (dropdowns)
     if (sheetDef.validations) {
       for (const v of sheetDef.validations) {
-        ws.dataValidation.add(v.range, {
+        ws.dataValidations.add(v.range, {
           type: v.type || "list",
           allowBlank: v.allowBlank !== false,
           formulae: v.formulae,
@@ -73,8 +73,8 @@ export async function buildWorkbook({ name, sheets }) {
       ws.views = [{ state: "frozen", xSplit: sheetDef.freeze.x || 0, ySplit: sheetDef.freeze.y || 1 }];
     }
 
-    // Charts
-    if (sheetDef.charts) {
+    // Charts (ExcelJS chart support varies by version; skip if unavailable)
+    if (sheetDef.charts && typeof ws.addChart === "function") {
       for (const chart of sheetDef.charts) {
         ws.addChart(chart.type || "bar", {
           title: chart.title || "Chart",
