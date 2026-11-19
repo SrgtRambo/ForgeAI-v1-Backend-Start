@@ -1,5 +1,4 @@
 {
   "$schema": "https://app.kilo.ai/config.json",
-  "model": "anthropic/claude-sonnet-4",
-  "small_model": "anthropic/claude-haiku-4"
+  "model": "kilo/kilo-auto/free"
 }
