@@ -12,6 +12,7 @@ import { loadConfig } from "./config.js";
 import { createJobRunner } from "./jobs.js";
 import { createMultiProviderChat } from "./ai-client.js";
 import { executeInSandbox, isDockerAvailable } from "./sandbox.js";
+import { createWebSocketHandler } from "./ws-handler.js";
 import { OrderError, validateOrder } from "./orders.js";
 import { ARCHETYPES } from "./archetypes.js";
 import { TIERS } from "./pricing.js";
@@ -96,6 +97,9 @@ const upload = multer({
 
 export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, pexels }) {
   const app = express();
+  // WebSocket setup
+  const { initializeWebSocket } = require("./ws-handler.js");
+  initializeWebSocket(app);
   const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200, standardHeaders: true, legacyHeaders: false });
   app.use('/api/', apiLimiter);
   app.use((req, _res, next) => {
