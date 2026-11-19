@@ -141,6 +141,8 @@ function buildCss(spec, usedSections) {
   );
   lines.push(
     "@media (max-width: 768px) { .container { padding: 0 1rem; } }",
+    "@media (max-width: 768px) { h1 { font-size: clamp(1.5rem, 6vw, 2.5rem); } }",
+    "@media (max-width: 768px) { section { padding: clamp(2rem, 4vw, 3rem) 0; } }",
   );
   lines.push("");
   lines.push("/** Section styles (deduplicated) */");
