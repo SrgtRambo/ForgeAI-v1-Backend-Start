@@ -2701,6 +2701,29 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     });
   }));
 
+  // ---------- Site analytics dashboard ----------
+
+  app.get(
+    "/api/site/analytics-dashboard/:briefId",
+    requireUser,
+    handle(async (req, res) => {
+      const { briefId } = req.params;
+      const owner = await db.query(`select id from site_briefs where id = $1 and user_id = $2`, [briefId, req.user.id]);
+      if (!owner[0]) return res.status(404).json({ error: "Brief not found." });
+      const total = await db.query(`select count(*) as c from site_analytics where brief_id = $1`, [briefId]);
+      const byPage = await db.query(`select page_slug, count(*) as c from site_analytics where brief_id = $1 group by page_slug order by c desc`, [briefId]);
+      const byDay = await db.query(`select date_trunc('day', viewed_at) as day, count(*) as c from site_analytics where brief_id = $1 group by day order by day desc limit 30`, [briefId]);
+      const referrers = await db.query(`select referrer, count(*) as c from site_analytics where brief_id = $1 and referrer is not null group by referrer order by c desc limit 10`, [briefId]);
+      res.json({
+        briefId,
+        totalViews: parseInt(total[0]?.c || 0),
+        byPage: byPage.map((r) => ({ page: r.page_slug, views: parseInt(r.c) })),
+        byDay: byDay.map((r) => ({ day: r.day, views: parseInt(r.c) })),
+        topReferrers: referrers.map((r) => ({ referrer: r.referrer, views: parseInt(r.c) })),
+      });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
