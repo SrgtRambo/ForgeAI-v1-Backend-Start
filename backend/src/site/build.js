@@ -121,6 +121,7 @@ function buildCss(spec, usedSections) {
   lines.push(
     "a:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: var(--radius-sm); }",
   );
+  lines.push("button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }");
   lines.push("img { max-width: 100%; height: auto; display: block; }");
   lines.push("h1, h2, h3, h4 { font-family: var(--font-display); margin-top: 0; line-height: 1.25; }");
   lines.push("h1 { font-size: clamp(2rem, 4vw + 1rem, 3.5rem); }");
