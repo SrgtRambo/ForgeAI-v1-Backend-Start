@@ -2691,6 +2691,16 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     }),
   );
 
+  // ---------- Generation queue status ----------
+
+  app.get("/api/generation/queue", requireUser, handle(async (_req, res) => {
+    res.json({
+      queued: 0,
+      processing: 0,
+      message: "Generation queue status",
+    });
+  }));
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
