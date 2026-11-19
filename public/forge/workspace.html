@@ -105,7 +105,46 @@ class="shell">
 <div class="btn-row"><button id="generateProject" class="btn primary" disabled>Generate project files…</button><button id="saveProjectFolder" class="btn hidden" disabled>Save project to a folder…</button><button id="downloadProjectZip" class="btn hidden" disabled>Download project ZIP</button><button class="btn" data-go="projects">Open an existing project</button></div><div id="generatorNotice" class="notice hidden"></div></article>
 <details id="versionHistoryPanel" class="card project-tools"><summary>Version history</summary><div><p class="card-desc">Each saved version keeps a restorable copy of the project's source files.</p><div id="versionHistory" class="test-list"><div class="empty">Generate or open a project to view its versions.</div></div></div></details>
 </div>
-<aside id="previewWrap" class="card generator-preview"><div class="preview-toolbar"><div><h2>Live app preview</h2><p id="previewStatus" class="card-desc">Generate or open a project to explore it here.</p></div><button class="btn" id="refreshPreview" disabled>Refresh</button></div><div id="previewEmpty" class="preview-empty"><div><strong>Your app will appear here</strong>Open a saved project or generate one to explore its screens without leaving Forge.</div></div><iframe id="preview" class="preview-frame hidden" title="Generated application preview" sandbox="allow-scripts allow-forms allow-modals"></iframe></aside>
+<aside id="previewWrap" class="card generator-preview"><div class="preview-toolbar"><div><h2>Live app preview</h2><p id="previewStatus" class="card-desc">Generate or open a project to explore it here.</p></div><button class="btn" id="refreshPreview" disabled>Refresh</button></div><div id="previewEmpty" class="preview-empty">
+<script>
+/* WebSocket for live preview updates */
+var ws = new WebSocket('ws://' + location.host + '/ws');
+ws.onopen = function() {
+  console.log('WS connected - live preview enabled');
+  var ps = document.getElementById('previewStatus');
+  if (ps) { ps.textContent = 'Live preview active'; ps.style.color = 'var(--accent)'; }
+};
+ws.onmessage = function(event) {
+  var data = JSON.parse(event.data);
+  if (data.type === 'preview_update') {
+    var preview = document.getElementById('preview').contentDocument || document.getElementById('preview').contentWindow.document;
+    if (data.html) { preview.body.innerHTML = data.html; }
+    if (data.css) {
+      var style = preview.querySelector('style') || preview.createElement('style');
+      style.textContent = data.css;
+      preview.head.appendChild(style);
+    }
+    if (data.js) {
+      var oldScripts = preview.querySelectorAll('script');
+      oldScripts.forEach(function(s) { s.remove(); });
+      if (data.js.main) {
+        var script = preview.createElement('script');
+        script.textContent = data.js.main;
+        preview.body.appendChild(script);
+      }
+    }
+  }
+};
+ws.onclose = function() {
+  var ps = document.getElementById('previewStatus');
+  if (ps) { ps.textContent = 'Preview disconnected'; ps.style.color = 'var(--muted)'; }
+};
+ws.onerror = function(error) {
+  console.error('WS error:', error);
+  var ps = document.getElementById('previewStatus');
+  if (ps) { ps.textContent = 'Preview error'; ps.style.color = 'var(--error)'; }
+};
+</script><div><strong>Your app will appear here</strong>Open a saved project or generate one to explore its screens without leaving Forge.</div></div><iframe id="preview" class="preview-frame hidden" title="Generated application preview" sandbox="allow-scripts allow-forms allow-modals"></iframe></aside>
 </div>
 <details id="sourceEditorPanel" class="card project-tools" style="margin-top:14px"><summary>Advanced: view or edit project source</summary><div><p class="card-desc editor-help">This is the app's actual HTML, CSS, and JavaScript code. Most of the time you can just use the preview. Open this only to inspect or edit code; edits appear in the preview before you save them.</p><div class="field"><label for="filePicker">Project file</label><select id="filePicker" class="input" disabled><option>Select a project first</option></select></div><textarea id="sourceEditor" class="editor" spellcheck="false" placeholder="Generated project source appears here."></textarea><div class="btn-row"><button id="saveSource" class="btn primary" disabled>Save file</button><span id="editorStatus" class="tiny muted"></span></div></div></details>
 </section>
