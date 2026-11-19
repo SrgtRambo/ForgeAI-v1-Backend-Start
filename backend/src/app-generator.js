@@ -142,6 +142,13 @@ app.listen(process.env.PORT || 3000, () => console.log('${app.name} running on p
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${app.name}</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .card { transition: box-shadow 0.2s; }
+    .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .btn { transition: all 0.2s; }
+    .btn:hover { transform: translateY(-1px); }
+    .list { scrollbar-width: thin; }
+  </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
   <header class="bg-white shadow-sm border-b">
