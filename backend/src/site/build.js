@@ -63,6 +63,8 @@ function buildPage(page, spec, images, baseUrl) {
       : "",
     `</head>`,
     `<body>`,
+    `<a href="#main" class="sr-only focus:not-sr-only" style="position:absolute;top:0;left:0;padding:0.5rem;background:var(--brand);color:#fff;z-index:999;">Skip to content</a>`,
+    `<main id="main">`,
   ]
     .filter(Boolean)
     .join("\n");
@@ -100,7 +102,7 @@ function buildPage(page, spec, images, baseUrl) {
 
   const scripts = `<script defer src="js/app.js"></script>`;
 
-  return [head, bodySections, scripts, `</body>`, `</html>`].join("\n");
+  return [head, bodySections, scripts, `</main>`, `</body>`, `</html>`].join("\n");
 }
 
 /** Build the full CSS: tokens + base + section CSS + app CSS. */
