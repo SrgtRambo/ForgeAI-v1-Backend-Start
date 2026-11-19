@@ -163,7 +163,7 @@ app.listen(process.env.PORT || 3000, () => console.log('${app.name} running on p
   </main>
   <script>
     const API = '';
-    async function api(path, opts) { const r = await fetch(API + path, { headers: {'Content-Type':'application/json'}, ...opts }); return r.json(); }
+    async function api(path, opts) { try { const r = await fetch(API + path, { headers: {'Content-Type':'application/json'}, ...opts }); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); } catch(e) { console.error(e); return { error: e.message }; } }
     async function loadDashboard() {
       const d = await api('/api/dashboard');
       const el = document.getElementById('dashboard');
