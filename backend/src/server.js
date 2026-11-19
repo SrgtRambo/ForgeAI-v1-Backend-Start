@@ -25,6 +25,7 @@ import { generateSpreadsheetSpec } from "./spreadsheet-ai.js";
 import { createSocialKit } from "./social-kit.js";
 import { generateSocialKitAI } from "./social-kit-ai.js";
 import { createWorkflow } from "./workflow.js";
+import { applyRevisionAI } from "./revision-ai.js";
 import { generateWorkflowAI } from "./workflow-ai.js";
 import { getProjectTemplates, getProjectTemplate } from "./project-templates.js";
 import { getTemplates, getTemplate } from "./templates.js";
@@ -1070,7 +1071,6 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
         return res.status(400).json({ error: "instruction is required." });
       }
       await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
-      // Save current version first
       const rows = await db.query(
         `select name, stage, data, version from projects where id = $1 and user_id = $2`,
         [id, req.user.id],
@@ -1082,13 +1082,21 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
         `insert into project_versions (project_id, version_number, name, stage, data) values ($1, $2, $3, $4, $5)`,
         [id, currentVer, proj.name, proj.stage, JSON.stringify(proj.data)],
       );
-      const revisedData = { ...proj.data, _lastRevision: instruction, _revisedAt: new Date().toISOString() };
+      // Try AI-driven revision first
+      let revisedData = proj.data;
+      if (chat && proj.data) {
+        const aiResult = await applyRevisionAI(chat, config.models?.standard || config.modelStandard, proj.data, instruction);
+        if (aiResult) revisedData = aiResult;
+      }
+      if (revisedData === proj.data) {
+        revisedData = { ...proj.data, _lastRevision: instruction, _revisedAt: new Date().toISOString() };
+      }
       const newVer = currentVer + 1;
       await db.query(
         `update projects set data = $1, version = $2, updated_at = now() where id = $3 and user_id = $4`,
         [JSON.stringify(revisedData), newVer, id, req.user.id],
       );
-      res.json({ projectId: id, newVersion: newVer, instruction });
+      res.json({ projectId: id, newVersion: newVer, instruction, aiApplied: revisedData !== proj.data });
     }),
   );
 
