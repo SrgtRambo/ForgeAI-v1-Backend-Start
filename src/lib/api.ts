@@ -27,7 +27,7 @@ export interface ApiProject {
   created_at?: string;
 }
 
-async function apiRequest(path: string, init?: RequestInit): Promise<Response> {
+export async function apiRequest(path: string, init?: RequestInit): Promise<Response> {
   const res = await fetch(backendUrl(path), {
     headers: {
       "Content-Type": "application/json",
