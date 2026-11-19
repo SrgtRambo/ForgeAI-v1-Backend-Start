@@ -113,6 +113,7 @@ function buildCss(spec, usedSections) {
   lines.push("/** Base reset */");
   lines.push("*, *::before, *::after { box-sizing: border-box; }");
   lines.push("html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }");
+  lines.push("header { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(8px); }");
   lines.push(
     "body { margin: 0; font-family: var(--font-body); color: var(--ink); background: var(--bg); line-height: 1.65; -webkit-font-smoothing: antialiased; }",
   );
