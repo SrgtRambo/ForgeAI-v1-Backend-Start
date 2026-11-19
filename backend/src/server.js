@@ -21,8 +21,11 @@ import { createAnalyzer } from "./site/analyze.js";
 import { buildSite } from "./site/build.js";
 import { validateByType, validateSocialKit, validateWorkflow, validateSpreadsheet } from "./qa/validator.js";
 import { buildWorkbook, workbookToBuffer, createDefaultWorkbook } from "./spreadsheet.js";
+import { generateSpreadsheetSpec } from "./spreadsheet-ai.js";
 import { createSocialKit } from "./social-kit.js";
+import { generateSocialKitAI } from "./social-kit-ai.js";
 import { createWorkflow } from "./workflow.js";
+import { generateWorkflowAI } from "./workflow-ai.js";
 import { getProjectTemplates, getProjectTemplate } from "./project-templates.js";
 import { getTemplates, getTemplate } from "./templates.js";
 import { createAppSpec } from "./app-generator.js";
@@ -984,9 +987,13 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     "/api/spreadsheet/generate",
     requireUser,
     handle(async (req, res) => {
-      const { name, businessName } = req.body || {};
+      const { name, businessName, description } = req.body || {};
       const bn = businessName || name || "Business";
-      const def = createDefaultWorkbook(bn);
+      let def = null;
+      if (chat) {
+        def = await generateSpreadsheetSpec(chat, config.models?.standard || config.modelStandard, bn, description);
+      }
+      if (!def) def = createDefaultWorkbook(bn);
       const wb = await buildWorkbook(def);
       const buffer = await workbookToBuffer(wb);
       const storagePath = `${req.user.id}/spreadsheet-${Date.now()}.xlsx`;
@@ -1018,7 +1025,11 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
       if (!businessName || typeof businessName !== "string") {
         return res.status(400).json({ error: "businessName is required." });
       }
-      const kit = createSocialKit({ businessName, industry, description, tone });
+      let kit = null;
+      if (chat) {
+        kit = await generateSocialKitAI(chat, config.models?.standard || config.modelStandard, businessName, industry, description);
+      }
+      if (!kit) kit = createSocialKit({ businessName, industry, description, tone });
       const storagePath = `${req.user.id}/social-kit-${Date.now()}.json`;
       await storagePut(storagePath, Buffer.from(JSON.stringify(kit, null, 2)), "application/json");
       res.json({ kit, storagePath });
@@ -1035,7 +1046,11 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
       if (!name || typeof name !== "string") {
         return res.status(400).json({ error: "name is required." });
       }
-      const workflow = createWorkflow({ name, description, steps });
+      let workflow = null;
+      if (chat) {
+        workflow = await generateWorkflowAI(chat, config.models?.standard || config.modelStandard, name, description);
+      }
+      if (!workflow) workflow = createWorkflow({ name, description, steps });
       const storagePath = `${req.user.id}/workflow-${Date.now()}.json`;
       await storagePut(storagePath, Buffer.from(JSON.stringify(workflow, null, 2)), "application/json");
       res.json({ workflow, storagePath });
