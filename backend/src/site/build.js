@@ -39,6 +39,7 @@ function resolveImageUrl(imageId, images) {
 function buildPage(page, spec, images, baseUrl) {
   const { sections, slug, title, description } = page;
   const heroImageId = sections.find((s) => s && s.type === "hero")?.content?.imageId;
+  const heroSectionIds = sections.filter(s => s && s.type === "hero").map(s => "hero-" + s.slug + "-" + (s.variant || "").replace(/[^a-z0-9]+/g, "-")).join(" ");
   const heroImageUrl = heroImageId ? resolveImageUrl(heroImageId, images) : "";
   const fontPairing = spec.design.fonts;
   const palette = spec.design.palette;
