@@ -172,6 +172,7 @@ function buildCss(spec, usedSections) {
   lines.push(".btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }");
   lines.push(
     "@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }",
+    "@media print { body { background: #fff; color: #000; } .nav-section, .nav-toggle { display: none; } a { text-decoration: underline; } }",
   );
 
   return lines.join("\n") + "\n";
