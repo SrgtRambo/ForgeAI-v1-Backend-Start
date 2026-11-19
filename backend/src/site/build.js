@@ -123,6 +123,10 @@ function buildCss(spec, usedSections) {
   );
   lines.push("img { max-width: 100%; height: auto; display: block; }");
   lines.push("h1, h2, h3, h4 { font-family: var(--font-display); margin-top: 0; line-height: 1.25; }");
+  lines.push("h1 { font-size: clamp(2rem, 4vw + 1rem, 3.5rem); }");
+  lines.push("h2 { font-size: clamp(1.5rem, 3vw + 0.5rem, 2.5rem); }");
+  lines.push("h3 { font-size: clamp(1.25rem, 2vw + 0.5rem, 1.75rem); }");
+  lines.push("section { padding: clamp(3rem, 6vw, 6rem) 0; }");
   lines.push("p { margin: 0 0 1rem; }");
   lines.push(
     "ul, ol { padding-left: 1.5rem; margin: 0 0 1rem; }",
