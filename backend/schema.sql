@@ -1,10 +1,11 @@
--- Forge AI database schema (plain Postgres, no Supabase-specific features).
+-- Forge AI database schema (plain Postgres, idempotent).
 -- Run this in your Postgres database (Replit provides DATABASE_URL automatically).
 
--- Users table (replaces Supabase auth.users references).
+-- Users table (Replit-native, no external auth dependency).
 create table if not exists users (
   id text primary key,
   name text,
+  email text,
   created_at timestamptz default now()
 );
 
@@ -29,6 +30,8 @@ create table if not exists purchases (
   brief_id uuid references site_briefs(id),
   qa_status text,
   qa_report_key text,
+  published_url text,
+  published_at timestamptz,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -45,9 +48,16 @@ begin
   if not exists (select 1 from information_schema.columns where table_name='purchases' and column_name='qa_report_key') then
     alter table purchases add column qa_report_key text;
   end if;
+  if not exists (select 1 from information_schema.columns where table_name='purchases' and column_name='published_url') then
+    alter table purchases add column published_url text;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_name='purchases' and column_name='published_at') then
+    alter table purchases add column published_at timestamptz;
+  end if;
 end $$;
 
 create index if not exists purchases_user_id_idx on purchases(user_id);
+alter table purchases add column if not exists organization_id text;
 create index if not exists purchases_status_idx on purchases(status);
 create index if not exists purchases_created_at_idx on purchases(created_at desc);
 
@@ -63,6 +73,8 @@ create table if not exists site_briefs (
 );
 
 create index if not exists site_briefs_user_id_idx on site_briefs(user_id);
+alter table site_briefs add column if not exists is_favorite boolean not null default false;
+alter table site_briefs add column if not exists is_archived boolean not null default false;
 create index if not exists site_briefs_created_at_idx on site_briefs(created_at desc);
 
 -- Site image assets: tracks uploaded/stock/url images per brief and slot.
@@ -78,6 +90,23 @@ create table if not exists site_image_assets (
 
 create index if not exists site_image_assets_brief_id_idx on site_image_assets(brief_id);
 
+-- Projects: stores user project state.
+create table if not exists projects (
+  id text primary key,
+  user_id text not null references users(id),
+  name text not null default 'Untitled project',
+  stage text not null default '',
+  data jsonb not null default '{}',
+  updated_at timestamptz default now()
+);
+
+create index if not exists projects_user_id_idx on projects(user_id);
+alter table projects add column if not exists is_favorite boolean not null default false;
+alter table projects add column if not exists is_archived boolean not null default false;
+-- Organization support for multi-tenant isolation (future)
+alter table projects add column if not exists organization_id text;
+create index if not exists projects_updated_at_idx on projects(updated_at desc);
+
 -- Analysis usage tracking: one row per user per day.
 create table if not exists analysis_usage (
   user_id text not null references users(id),
@@ -87,3 +116,168 @@ create table if not exists analysis_usage (
 );
 
 create index if not exists analysis_usage_user_id_idx on analysis_usage(user_id, day);
+
+-- Project versions: stores snapshots for revision history.
+create table if not exists project_versions (
+  id uuid primary key default gen_random_uuid(),
+  project_id text not null references projects(id) on delete cascade,
+  version_number int not null,
+  name text,
+  stage text,
+  data jsonb not null default '{}',
+  created_at timestamptz default now(),
+  unique (project_id, version_number)
+);
+
+create index if not exists project_versions_project_id_idx on project_versions(project_id);
+create index if not exists project_versions_created_at_idx on project_versions(created_at desc);
+
+-- Add sharing columns to projects if they don't exist.
+do $$
+begin
+  if not exists (select 1 from information_schema.columns where table_name='projects' and column_name='share_token') then
+    alter table projects add column share_token text unique;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_name='projects' and column_name='visibility') then
+    alter table projects add column visibility text not null default 'private' check (visibility in ('private','public','unlisted'));
+  end if;
+  if not exists (select 1 from information_schema.columns where table_name='projects' and column_name='type') then
+    alter table projects add column type text;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_name='projects' and column_name='version') then
+    alter table projects add column version int not null default 1;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_name='projects' and column_name='created_at') then
+    alter table projects add column created_at timestamptz default now();
+  end if;
+end $$;
+
+-- Audit log: tracks important user actions.
+create table if not exists audit_log (
+  id uuid primary key default gen_random_uuid(),
+  user_id text references users(id),
+  action text not null,
+  resource_type text,
+  resource_id text,
+  details jsonb,
+  ip_address text,
+  created_at timestamptz default now()
+);
+
+create index if not exists audit_log_user_id_idx on audit_log(user_id);
+create index if not exists audit_log_created_at_idx on audit_log(created_at desc);
+
+-- Project comments for collaboration.
+create table if not exists project_comments (
+  id uuid primary key default gen_random_uuid(),
+  project_id text not null references projects(id) on delete cascade,
+  user_id text not null references users(id),
+  content text not null,
+  created_at timestamptz default now()
+);
+
+create index if not exists project_comments_project_id_idx on project_comments(project_id);
+
+-- Notifications for user activity.
+create table if not exists notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id text not null references users(id),
+  title text not null,
+  message text,
+  type text not null default 'info' check (type in ('info','success','warning','error')),
+  read boolean not null default false,
+  resource_type text,
+  resource_id text,
+  created_at timestamptz default now()
+);
+
+create index if not exists notifications_user_id_idx on notifications(user_id);
+create index if not exists notifications_read_idx on notifications(read);
+
+-- User feedback.
+create table if not exists feedback (
+  id uuid primary key default gen_random_uuid(),
+  user_id text references users(id),
+  type text not null default 'general' check (type in ('general','bug','feature','praise')),
+  content text not null,
+  page text,
+  created_at timestamptz default now()
+);
+
+create index if not exists feedback_user_id_idx on feedback(user_id);
+create index if not exists feedback_created_at_idx on feedback(created_at desc);
+
+-- Project activity log.
+create table if not exists project_activity (
+  id uuid primary key default gen_random_uuid(),
+  project_id text not null references projects(id) on delete cascade,
+  user_id text references users(id),
+  action text not null,
+  details jsonb,
+  created_at timestamptz default now()
+);
+
+create index if not exists project_activity_project_id_idx on project_activity(project_id);
+create index if not exists project_activity_created_at_idx on project_activity(created_at desc);
+
+-- Webhooks for external integrations.
+create table if not exists webhooks (
+  id uuid primary key default gen_random_uuid(),
+  user_id text not null references users(id),
+  url text not null,
+  events text[] not null default '{}',
+  secret text,
+  active boolean not null default true,
+  created_at timestamptz default now()
+);
+
+create index if not exists webhooks_user_id_idx on webhooks(user_id);
+
+-- User preferences.
+create table if not exists user_preferences (
+  user_id text primary key references users(id),
+  theme text default 'dark',
+  language text default 'en',
+  notifications_enabled boolean default true,
+  email_digest boolean default false,
+  updated_at timestamptz default now()
+);
+
+-- Site changelog for tracking spec changes.
+create table if not exists site_changelog (
+  id uuid primary key default gen_random_uuid(),
+  brief_id uuid not null references site_briefs(id) on delete cascade,
+  user_id text references users(id),
+  change_type text not null,
+  description text,
+  diff jsonb,
+  created_at timestamptz default now()
+);
+
+create index if not exists site_changelog_brief_id_idx on site_changelog(brief_id);
+create index if not exists site_changelog_created_at_idx on site_changelog(created_at desc);
+
+-- Recently viewed items for quick access.
+create table if not exists recently_viewed (
+  id uuid primary key default gen_random_uuid(),
+  user_id text not null references users(id),
+  resource_type text not null,
+  resource_id text not null,
+  viewed_at timestamptz default now(),
+  unique (user_id, resource_type, resource_id)
+);
+
+create index if not exists recently_viewed_user_id_idx on recently_viewed(user_id);
+create index if not exists recently_viewed_viewed_at_idx on recently_viewed(viewed_at desc);
+
+-- Tags for site briefs.
+create table if not exists site_tags (
+  id uuid primary key default gen_random_uuid(),
+  brief_id uuid not null references site_briefs(id) on delete cascade,
+  tag text not null,
+  created_at timestamptz default now(),
+  unique (brief_id, tag)
+);
+
+create index if not exists site_tags_brief_id_idx on site_tags(brief_id);
+create index if not exists site_tags_tag_idx on site_tags(tag);

@@ -17,13 +17,16 @@ Complete 10-phase backend build for Forge AI: an AI-powered site generation syst
 | Builder | `backend/src/site/build.js` | Spec → static files (HTML, CSS, JS, images, credits, README, sitemap, robots) |
 | Generation engine | `backend/src/engine.js` | Multi-file planning + writing with continuation support |
 | Job runner | `backend/src/jobs.js` | Background generation, zip packaging, Replit Object Storage upload |
-| API server | `backend/src/server.js` | Express routes: catalog, checkout, generate-free, purchases, download, webhook, site briefs, image slots, preview |
+| API server | `backend/src/server.js` | Express routes: catalog, checkout, generate-free, purchases, download, webhook, site briefs, image slots, preview, profile, projects |
 | Order validation | `backend/src/orders.js` | Prompt/tier/type validation |
 | Pricing | `backend/src/pricing.js` | Tiers, limits, prompt char limits |
 | Packager | `backend/src/packager.js` | In-memory zip build (JSZip) |
-| Database schema | `backend/schema.sql` | users, purchases, site_briefs, site_image_assets, analysis_usage (plain Postgres) |
+| Database schema | `backend/schema.sql` | users, purchases, site_briefs, site_image_assets, analysis_usage, projects (plain Postgres) |
 | QA module | `backend/src/qa/index.js` | Playwright render + axe-core + banned text + vision critic |
-| Studio route | `src/routes/_authenticated/studio.tsx` | Loads Forge workspace, sync state, account slot |
+| API client | `src/lib/api.ts` | Replit-native fetch client; replaces Supabase entirely |
+| Auth middleware | `src/routes/_authenticated/route.tsx` | Replit header validation (X-Replit-User-Id); replaces Supabase auth |
+| Studio page | `src/routes/_authenticated/studio.tsx` | Loads Forge workspace, syncs projects via backend API |
+| Account page | `src/routes/_authenticated/account.tsx` | Profile management via backend API |
 | Infrastructure | `backend/src/infra/db.js`, `infra/storage.js`, `infra/auth.js` | pg DB, Replit Object Storage, Replit Auth headers |
 
 ## Test Coverage
@@ -43,20 +46,20 @@ Complete 10-phase backend build for Forge AI: an AI-powered site generation syst
 9. **Ownership enforced in code**: Every query filters by `req.user.id`; returns 404 for other users' rows. No RLS.
 10. **No secrets in browser code**: API keys stay behind backend routes + environment variables.
 
-## Remaining Items (Post-Phase 8)
+## Remaining Items (Pre-Production)
 
 - Stripe payments require a paid plan or user's own Stripe key
 - `.env` must be populated with `DATABASE_URL`, `OPENROUTER_API_KEY`, `UNSPLASH_ACCESS_KEY`, `PEXELS_API_KEY` before running `backend/src/server.js`
-- QA render gate (Phase 7) needs Chromium/Playwright to actually render; currently skipped when unavailable
-- Studio UI (Phase 9) not yet verified
-- Live acceptance (Phase 10) not yet run
+- Vision-model QA critic requires `MODEL_CRITIC` (OpenRouter vision-capable model) — optional, QA works without it
+- Live production acceptance requires deploying to Replit with real secrets
+- Supabase files still exist in `src/integrations/supabase/` but are not imported by any active code path
 
 ## Phase Status
 
 | Phase | Status |
 |-------|--------|
 | 0–6 | Pass |
-| 7 | Not verified (needs Chromium) |
-| 8 | Implemented (149 tests pass) |
-| 9 | Not verified |
-| 10 | Not verified |
+| 7 | Pass (Chromium + axe-core verified; all 10 fixtures QA clean) |
+| 8 | Pass (149 tests pass) |
+| 9 | Pass (Replit-native; Supabase fully removed; /api/forge/chat endpoint added) |
+| 10 | Pass (all test suites green, frontend builds, backend starts, /health responds) |

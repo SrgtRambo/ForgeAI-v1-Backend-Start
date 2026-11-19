@@ -12,6 +12,11 @@ function esc(s) {
 function imgUrl(ctx, id) {
   return (ctx.images && ctx.images[id]) || "";
 }
+function itemCredit(ctx, id) {
+  const c = (ctx.imageCredits && ctx.imageCredits[id]) || {};
+  if (!c.photographer) return "";
+  return `<p class="image-credit">Photo by ${esc(c.photographer)} on ${c.provider === "unsplash" ? "Unsplash" : c.provider || "Stock"}</p>`;
+}
 function sectionId(content) {
   return `gallery-${esc((content.sectionId || "gallery").toLowerCase().replace(/[^a-z0-9]+/g, "-"))}`;
 }
@@ -32,7 +37,7 @@ export const variants = {
               .map((item) => {
                 const url = imgUrl(ctx, item.imageId);
                 const alt = esc(item.alt || "");
-                return `<figure class="gallery-item"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"><figcaption>${esc(item.caption || "")}</figcaption></figure>`;
+                return `<figure class="gallery-item"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"><figcaption>${esc(item.caption || "")}</figcaption>${itemCredit(ctx, item.imageId)}</figure>`;
               })
               .join("")}
           </div>
@@ -47,6 +52,7 @@ export const variants = {
       .gallery-item { display:inline-block; width:100%; margin-bottom:calc(var(--space-unit) * 1); break-inside:avoid; }
       .gallery-item img { width:100%; height:auto; display:block; border-radius:var(--radius); background:var(--surface); }
       .gallery-item figcaption { font-family:var(--font-body); margin:calc(var(--space-unit) * 0.5) 0 0; font-size:clamp(0.85rem,1vw + 0.25rem,0.95rem); color:var(--muted); }
+      .image-credit { font-family:var(--font-body); font-size:clamp(0.75rem,0.8vw + 0.2rem,0.8rem); color:var(--muted); margin-top:calc(var(--space-unit) * 0.5); }
       @media (min-width:700px) { .gallery-masonry { column-count:3; } }
     `,
   },
@@ -64,7 +70,7 @@ export const variants = {
               .map((item) => {
                 const url = imgUrl(ctx, item.imageId);
                 const alt = esc(item.alt || "");
-                return `<figure class="gallery-item"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"><figcaption>${esc(item.caption || "")}</figcaption></figure>`;
+                return `<figure class="gallery-item"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"><figcaption>${esc(item.caption || "")}</figcaption>${itemCredit(ctx, item.imageId)}</figure>`;
               })
               .join("")}
           </div>
@@ -79,6 +85,7 @@ export const variants = {
       .gallery-item { border-radius:var(--radius); overflow:hidden; background:var(--bg); }
       .gallery-item img { width:100%; height:auto; display:block; border-radius:var(--radius); }
       .gallery-item figcaption { font-family:var(--font-body); margin:calc(var(--space-unit) * 0.5) 0 0; font-size:clamp(0.85rem,1vw + 0.25rem,0.95rem); color:var(--muted); }
+      .image-credit { font-family:var(--font-body); font-size:clamp(0.75rem,0.8vw + 0.2rem,0.8rem); color:var(--muted); margin-top:calc(var(--space-unit) * 0.5); }
     `,
   },
 };

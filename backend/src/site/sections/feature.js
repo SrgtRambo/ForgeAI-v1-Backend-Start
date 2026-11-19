@@ -12,6 +12,11 @@ function esc(s) {
 function imgUrl(ctx, id) {
   return (ctx.images && ctx.images[id]) || "";
 }
+function imageCredit(ctx, id) {
+  const c = (ctx.imageCredits && ctx.imageCredits[id]) || {};
+  if (!c.photographer) return "";
+  return `<p class="image-credit">Photo by ${esc(c.photographer)} on ${c.provider === "unsplash" ? "Unsplash" : c.provider || "Stock"}</p>`;
+}
 function sectionId(content) {
   return `feature-${esc((content.sectionId || "feature").toLowerCase().replace(/[^a-z0-9]+/g, "-"))}`;
 }
@@ -31,7 +36,7 @@ export const variants = {
       return `
         <section class="feature image-left" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="${id}-heading">
           <div class="feature-inner">
-            ${hasImage ? `<div class="feature-image"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"></div>` : ""}
+            ${hasImage ? `<div class="feature-image"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async">${imageCredit(ctx, imageId)}</div>` : ""}
             <div class="feature-text">
               <h2 id="${id}-heading">${heading}</h2>
               ${body ? `<p>${body}</p>` : ""}
@@ -49,6 +54,7 @@ export const variants = {
       .feature-text { text-align:center; }
       .feature-text h2 { font-family:var(--font-display); margin:0 0 calc(var(--space-unit) * 1); font-size:clamp(1.5rem,2vw + 0.75rem,2rem); color:var(--ink); }
       .feature-text p { font-family:var(--font-body); margin:0; font-size:clamp(1rem,1.25vw + 0.5rem,1.25rem); line-height:1.6; color:var(--ink); max-width:60ch; }
+      .image-credit { font-family:var(--font-body); font-size:clamp(0.75rem,0.8vw + 0.2rem,0.8rem); color:var(--muted); margin-top:calc(var(--space-unit) * 0.5); }
       @media (min-width:700px) {
         .feature-inner { flex-direction:row; text-align:left; }
         .feature-text { max-width:55ch; }
@@ -72,7 +78,7 @@ export const variants = {
               <h2 id="${id}-heading">${heading}</h2>
               ${body ? `<p>${body}</p>` : ""}
             </div>
-            ${hasImage ? `<div class="feature-image"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"></div>` : ""}
+            ${hasImage ? `<div class="feature-image"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async">${imageCredit(ctx, imageId)}</div>` : ""}
           </div>
         </section>
       `;
@@ -86,6 +92,7 @@ export const variants = {
       .feature-text { text-align:center; }
       .feature-text h2 { font-family:var(--font-display); margin:0 0 calc(var(--space-unit) * 1); font-size:clamp(1.5rem,2vw + 0.75rem,2rem); color:var(--ink); }
       .feature-text p { font-family:var(--font-body); margin:0; font-size:clamp(1rem,1.25vw + 0.5rem,1.25rem); line-height:1.6; color:var(--ink); max-width:60ch; }
+      .image-credit { font-family:var(--font-body); font-size:clamp(0.75rem,0.8vw + 0.2rem,0.8rem); color:var(--muted); margin-top:calc(var(--space-unit) * 0.5); }
       @media (min-width:700px) {
         .feature-inner { flex-direction:row-reverse; text-align:left; }
         .feature-text { max-width:55ch; }
@@ -109,7 +116,7 @@ export const variants = {
               <h2 id="${id}-heading">${heading}</h2>
               ${body ? `<p>${body}</p>` : ""}
             </div>
-            ${hasImage ? `<div class="feature-image"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"></div>` : ""}
+            ${hasImage ? `<div class="feature-image"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async">${imageCredit(ctx, imageId)}</div>` : ""}
           </div>
         </section>
       `;
@@ -123,6 +130,7 @@ export const variants = {
       .feature-text { text-align:center; }
       .feature-text h2 { font-family:var(--font-display); margin:0 0 calc(var(--space-unit) * 1); font-size:clamp(1.5rem,2vw + 0.75rem,2rem); color:var(--ink); }
       .feature-text p { font-family:var(--font-body); margin:0; font-size:clamp(1rem,1.25vw + 0.5rem,1.25rem); line-height:1.6; color:var(--ink); max-width:60ch; }
+      .image-credit { font-family:var(--font-body); font-size:clamp(0.75rem,0.8vw + 0.2rem,0.8rem); color:var(--muted); margin-top:calc(var(--space-unit) * 0.5); }
     `,
   },
 };

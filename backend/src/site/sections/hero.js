@@ -12,6 +12,11 @@ function esc(s) {
 function imgUrl(ctx, id) {
   return (ctx.images && ctx.images[id]) || "";
 }
+function imageCredit(ctx, id) {
+  const c = (ctx.imageCredits && ctx.imageCredits[id]) || {};
+  if (!c.photographer) return "";
+  return `<p class="image-credit">Photo by ${esc(c.photographer)} on ${c.provider === "unsplash" ? "Unsplash" : c.provider || "Stock"}</p>`;
+}
 
 export const type = "hero";
 export const variants = {
@@ -28,7 +33,7 @@ export const variants = {
         <section class="hero split-image" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="hero-heading">
           <h1 id="hero-heading">${heading}</h1>
           ${body ? `<p class="hero-body">${body}</p>` : ""}
-          ${hasImage ? `<div class="hero-image"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"></div>` : ""}
+          ${hasImage ? `<div class="hero-image"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async">${imageCredit(ctx, imageId)}</div>` : ""}
         </section>
       `;
     },
@@ -39,6 +44,7 @@ export const variants = {
       .hero-body { font-family:var(--font-body); margin:0 0 calc(var(--space-unit) * 2); font-size:clamp(1rem,1.25vw + 0.5rem,1.25rem); line-height:1.6; color:var(--ink); max-width:60ch; }
       .hero-image { margin-top:calc(var(--space-unit) * 2); border-radius:var(--radius); overflow:hidden; background:var(--surface); }
       .hero-image img { width:100%; height:auto; display:block; border-radius:var(--radius); }
+      .image-credit { font-family:var(--font-body); font-size:clamp(0.75rem,0.8vw + 0.2rem,0.8rem); color:var(--muted); margin-top:calc(var(--space-unit) * 0.5); }
       @media (min-width:700px) {
         .hero.split-image { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--space-unit) * 2); align-items:center; }
         .hero-image { margin-top:0; }
@@ -58,6 +64,7 @@ export const variants = {
         <section class="hero full-bleed" style="--space-unit:${space(density)};--radius:${radius(rad)};" aria-labelledby="hero-heading">
           ${hasImage ? `<div class="hero-bg"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"></div>` : ""}
           <div class="hero-content">
+            ${imageCredit(ctx, imageId)}
             <h1 id="hero-heading">${heading}</h1>
             ${body ? `<p class="hero-body">${body}</p>` : ""}
           </div>
@@ -90,7 +97,7 @@ export const variants = {
           <h1 id="hero-heading">${heading}</h1>
           ${body ? `<p class="hero-body">${body}</p>` : ""}
           ${stat ? `<div class="hero-stat"><strong>${stat}</strong><span>${statLabel}</span></div>` : ""}
-          ${hasImage ? `<div class="hero-image"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async"></div>` : ""}
+          ${hasImage ? `<div class="hero-image"><img src="${esc(url)}" alt="${alt}" loading="lazy" decoding="async">${imageCredit(ctx, imageId)}</div>` : ""}
         </section>
       `;
     },
@@ -104,6 +111,7 @@ export const variants = {
       .hero-stat span { font-family:var(--font-body); color:var(--muted); font-size:clamp(0.85rem,1vw + 0.25rem,1rem); }
       .hero-image { margin-top:calc(var(--space-unit) * 2); border-radius:var(--radius); overflow:hidden; background:var(--surface); }
       .hero-image img { width:100%; height:auto; display:block; border-radius:var(--radius); }
+      .image-credit { font-family:var(--font-body); font-size:clamp(0.75rem,0.8vw + 0.2rem,0.8rem); color:var(--muted); margin-top:calc(var(--space-unit) * 0.5); }
       @media (min-width:700px) {
         .hero.editorial { display:grid; grid-template-columns:1fr 320px; gap:calc(var(--space-unit) * 3); align-items:start; }
         .hero-image { margin-top:0; }

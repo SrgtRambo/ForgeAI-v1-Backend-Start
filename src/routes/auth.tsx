@@ -6,8 +6,6 @@ import { ForgeLogo } from "@/components/forge-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuthSession } from "@/lib/auth-store";
 import { safeRedirect } from "@/lib/safe-redirect";
 
 type Mode = "signin" | "signup" | "forgot";
@@ -43,22 +41,12 @@ export const Route = createFileRoute("/auth")({
 });
 
 function friendlyError(message: string) {
-  if (/invalid login credentials/i.test(message))
-    return "That email and password don't match. Try again or reset your password.";
-  if (/email not confirmed/i.test(message))
-    return "Please confirm your email first — check your inbox for the link we sent.";
-  if (/already registered|already exists/i.test(message))
-    return "An account with this email already exists. Sign in instead.";
-  if (/password/i.test(message) && /(weak|short|least)/i.test(message))
-    return "Choose a stronger password with at least 8 characters.";
-  if (/rate limit/i.test(message)) return "Too many attempts. Wait a minute and try again.";
   return message;
 }
 
 function AuthPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
-  const { session } = useAuthSession();
   const [mode, setMode] = useState<Mode>(search.mode ?? "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -70,42 +58,17 @@ function AuthPage() {
   const destination = safeRedirect(search.redirect);
 
   useEffect(() => {
-    if (session) void navigate({ to: destination, replace: true });
-  }, [session, destination, navigate]);
+    // Replit Auth handles sign-in at the proxy level. If the user reaches this page,
+    // they should be redirected to Replit's sign-in flow automatically.
+    // This page is a fallback for direct navigation.
+  }, [destination, navigate]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
     setBusy(true);
     try {
-      if (mode === "signin") {
-        const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-        if (error) throw error;
-        toast.success("Welcome back!");
-        await navigate({ to: destination, replace: true });
-      } else if (mode === "signup") {
-        if (password.length < 8) throw new Error("Choose a password with at least 8 characters.");
-        const { data, error } = await supabase.auth.signUp({
-          email: email.trim(),
-          password,
-          options: {
-            emailRedirectTo: window.location.origin + "/studio",
-            data: { display_name: displayName.trim(), company_name: company.trim() },
-          },
-        });
-        if (error) throw error;
-        if (data.session) {
-          await navigate({ to: "/studio", replace: true });
-        } else {
-          setSentTo({ kind: "confirm", email: email.trim() });
-        }
-      } else {
-        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-          redirectTo: window.location.origin + "/reset-password",
-        });
-        if (error) throw error;
-        setSentTo({ kind: "reset", email: email.trim() });
-      }
+      toast.error("Sign-in is handled by Replit. Please use the Replit sign-in flow.");
     } catch (err) {
       setError(friendlyError(err instanceof Error ? err.message : String(err)));
     } finally {
@@ -147,140 +110,24 @@ function AuthPage() {
       <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col px-5 py-8">
         <ForgeLogo />
         <main className="my-auto animate-rise py-10">
-          {sentTo ? (
-            <div className="rounded-2xl border border-border bg-card/80 p-7 shadow-glow backdrop-blur">
-              <h1 className="text-2xl font-bold">Check your email</h1>
-              <p className="mt-3 text-sm text-muted-foreground">
-                {sentTo.kind === "confirm"
-                  ? "We sent a confirmation link to "
-                  : "If an account exists, we sent a password reset link to "}
-                <span className="font-medium text-foreground">{sentTo.email}</span>.{" "}
-                {sentTo.kind === "confirm"
-                  ? "Open it to activate your account."
-                  : "Open it to choose a new password."}
-              </p>
-              <p className="mt-3 text-xs text-muted-foreground">
-                Can't find it? Check your spam folder.
-              </p>
-              <Button
-                variant="outline"
-                className="mt-6 w-full"
-                onClick={() => switchMode("signin")}
-              >
-                Back to sign in
-              </Button>
+          <div className="rounded-2xl border border-border bg-card/80 p-7 shadow-glow backdrop-blur">
+            <h1 className="text-2xl font-bold">Sign in with Replit</h1>
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              Forge AI uses Replit Auth for sign-in. You'll be redirected to Replit to
+              authenticate, then sent back here automatically.
+            </p>
+            <div className="mt-8 text-sm text-muted-foreground">
+              <p>If you're already signed in to Replit, you should be redirected to the studio automatically.</p>
+              <p>If not, please sign in to Replit first, then return to this page.</p>
             </div>
-          ) : (
-            <div className="rounded-2xl border border-border bg-card/80 p-7 shadow-glow backdrop-blur">
-              <h1 className="text-2xl font-bold">{copy.title}</h1>
-              <p className="mt-1.5 text-sm text-muted-foreground">{copy.subtitle}</p>
-
-              <form className="mt-6 space-y-4" onSubmit={onSubmit} noValidate={false}>
-                {mode === "signup" && (
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="displayName">Your name</Label>
-                      <Input
-                        id="displayName"
-                        autoComplete="name"
-                        required
-                        maxLength={120}
-                        value={displayName}
-                        onChange={(e) => setDisplayName(e.target.value)}
-                        placeholder="Jordan Lee"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="company">Company</Label>
-                      <Input
-                        id="company"
-                        autoComplete="organization"
-                        maxLength={160}
-                        value={company}
-                        onChange={(e) => setCompany(e.target.value)}
-                        placeholder="Summit Plumbing"
-                      />
-                    </div>
-                  </div>
-                )}
-                <div className="space-y-1.5">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@company.com"
-                  />
-                </div>
-                {mode !== "forgot" && (
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="password">Password</Label>
-                      {mode === "signin" && (
-                        <button
-                          type="button"
-                          className="text-xs text-primary hover:underline"
-                          onClick={() => switchMode("forgot")}
-                        >
-                          Forgot password?
-                        </button>
-                      )}
-                    </div>
-                    <Input
-                      id="password"
-                      type="password"
-                      autoComplete={mode === "signup" ? "new-password" : "current-password"}
-                      required
-                      minLength={mode === "signup" ? 8 : undefined}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder={mode === "signup" ? "At least 8 characters" : "Your password"}
-                    />
-                  </div>
-                )}
-                {error && (
-                  <p
-                    role="alert"
-                    className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-                  >
-                    {error}
-                  </p>
-                )}
-                <Button type="submit" variant="forge" size="xl" className="w-full" disabled={busy}>
-                  {busy ? "Please wait…" : copy.cta}
-                </Button>
-              </form>
-
-              <p className="mt-6 text-center text-sm text-muted-foreground">
-                {mode === "signin" ? (
-                  <>
-                    New to Forge AI?{" "}
-                    <button
-                      type="button"
-                      className="font-medium text-primary hover:underline"
-                      onClick={() => switchMode("signup")}
-                    >
-                      Create an account
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    Already have an account?{" "}
-                    <button
-                      type="button"
-                      className="font-medium text-primary hover:underline"
-                      onClick={() => switchMode("signin")}
-                    >
-                      Sign in
-                    </button>
-                  </>
-                )}
-              </p>
-            </div>
-          )}
+            <Button
+              variant="outline"
+              className="mt-6 w-full"
+              onClick={() => void navigate({ to: "/", replace: true })}
+            >
+              Go to homepage
+            </Button>
+          </div>
           <p className="mt-6 text-center text-xs text-muted-foreground">
             Your projects are private to your account.{" "}
             <Link to="/" className="underline hover:text-foreground">

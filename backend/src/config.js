@@ -27,7 +27,25 @@ export function loadConfig() {
       standard: read("MODEL_STANDARD", "google/gemini-2.5-flash"),
       pro: read("MODEL_PRO", "anthropic/claude-sonnet-4.5"),
     },
+    openrouterKey: read("OPENROUTER_API_KEY"),
+    modelStandard: read("MODEL_STANDARD", "google/gemini-2.5-flash"),
+    modelPro: read("MODEL_PRO", "anthropic/claude-sonnet-4.5"),
+    modelAnalysis: read("MODEL_ANALYSIS", read("MODEL_STANDARD", "google/gemini-2.5-flash")),
+    modelSpec: read("MODEL_SPEC", read("MODEL_STANDARD", "google/gemini-2.5-flash")),
+    modelCopy: read("MODEL_COPY", read("MODEL_STANDARD", "google/gemini-2.5-flash")),
+    modelCritic: read("MODEL_CRITIC", ""),
   };
   config.paymentsEnabled = Boolean(config.stripeSecretKey && config.stripeWebhookSecret);
+  config.aiConfigured = Boolean(
+    process.env.OPENROUTER_API_KEY ||
+    process.env.GROQ_API_KEY ||
+    process.env.KILO_API_KEY ||
+    (process.env.AI_ENDPOINT && process.env.AI_API_KEY)
+  );
+  config.aiProviders = [];
+  if (process.env.OPENROUTER_API_KEY) config.aiProviders.push("openrouter");
+  if (process.env.GROQ_API_KEY) config.aiProviders.push("groq");
+  if (process.env.KILO_API_KEY) config.aiProviders.push("kilo");
+  if (process.env.AI_ENDPOINT && process.env.AI_API_KEY) config.aiProviders.push("custom");
   return config;
 }

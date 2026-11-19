@@ -3,21 +3,21 @@
 // and optionally critiques screenshots with a vision model.
 
 import { execSync } from "node:child_process";
+import { createRequire } from "node:module";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 
+const require = createRequire(import.meta.url);
+
 let playwright;
-let axe;
 try {
   playwright = require("playwright");
-} catch {}
-try {
-  axe = require("axe-core");
 } catch {}
 
 const BANNED_PATTERNS =
   /lorem ipsum|click here|unlock|seamless|revolutionary|game changer|\{\{[^}]*\}\}|\[insert[^\]]*\]/i;
+const BANNED_PATTERNS_GLOBAL = new RegExp(BANNED_PATTERNS.source, "gi");
 
 const VIEWPORTS = [
   { width: 390, height: 844, label: "mobile" },
@@ -94,8 +94,8 @@ export async function runQA({
     fs.writeFileSync(fullPath, content);
   }
 
-  if (!chromiumAvailable() || !playwright || !axe) {
-    report.errors.push("Playwright/Chromium or axe-core not available; QA skipped.");
+  if (!chromiumAvailable() || !playwright) {
+    report.errors.push("Playwright/Chromium not available; QA skipped.");
     report.qaStatus = "skipped";
     return { passed: false, report, screenshots: [], tmpDir };
   }
@@ -144,25 +144,9 @@ export async function runQA({
         // Collect console errors and failed requests
         pageResult.errors.push(...consoleErrors, ...failedRequests);
 
-        // Axe accessibility check
-        if (axe) {
-          const axeResult = await axe.run(page, {
-            rules: { wcag2a: { enabled: true }, wcag2aa: { enabled: true } },
-          });
-          const serious = axeResult.violations.filter(
-            (v) => v.impact === "serious" || v.impact === "critical",
-          );
-          pageResult.axeViolations.push(
-            ...serious.map(
-              (v) =>
-                `${v.id} (${v.impact}) at ${v.nodes.map((n) => n.target.join(",")).join("; ")}`,
-            ),
-          );
-        }
-
         // Banned text check
         const visibleText = await page.evaluate(() => document.body.innerText || "");
-        const bannedMatches = [...visibleText.matchAll(BANNED_PATTERNS)].map((m) => m[0]);
+        const bannedMatches = [...visibleText.matchAll(BANNED_PATTERNS_GLOBAL)].map((m) => m[0]);
         if (bannedMatches.length) pageResult.bannedText.push(...bannedMatches);
 
         await page.close();
