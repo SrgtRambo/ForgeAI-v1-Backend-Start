@@ -2676,6 +2676,21 @@ export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, 
     });
   }));
 
+  // ---------- Generation history ----------
+
+  app.get(
+    "/api/generation/history",
+    requireUser,
+    handle(async (req, res) => {
+      await ensureUser(req.user.id, req.user.name, req.headers["x-replit-user-email"]);
+      const rows = await db.query(
+        `select id, type, tier, status, project_name, file_count, created_at, completed_at from purchases where user_id = $1 order by created_at desc limit 50`,
+        [req.user.id],
+      );
+      res.json({ history: rows });
+    }),
+  );
+
   // ---------- Forge AI chat (Ollama-shaped, for Forge workspace scripts) ----------
 
   app.get(
