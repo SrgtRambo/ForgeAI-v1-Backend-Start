@@ -39,6 +39,7 @@ function resolveImageUrl(imageId, images) {
 function buildPage(page, spec, images, baseUrl) {
   const { sections, slug, title, description } = page;
   const heroImageId = sections.find((s) => s && s.type === "hero")?.content?.imageId;
+  const heroSectionIds = sections.filter(s => s && s.type === "hero").map(s => "hero-" + s.slug + "-" + (s.variant || "").replace(/[^a-z0-9]+/g, "-")).join(" ");
   const heroImageUrl = heroImageId ? resolveImageUrl(heroImageId, images) : "";
   const fontPairing = spec.design.fonts;
   const palette = spec.design.palette;
@@ -53,6 +54,9 @@ function buildPage(page, spec, images, baseUrl) {
     `<meta name="description" content="${esc(description || spec.meta.businessName)}">`,
     `<meta property="og:title" content="${esc(title)}">`,
     `<meta property="og:description" content="${esc(description || spec.meta.businessName)}">`,
+    `<meta property="og:type" content="website">`,
+    `<meta name="twitter:card" content="summary_large_image">`,
+    `<meta name="twitter:title" content="${esc(title)}">`,
     heroImageUrl ? `<meta property="og:image" content="${esc(heroImageUrl)}">` : "",
     `<script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@type": "Organization", "name": spec.meta.businessName })}</script>`,
     `<link rel="preconnect" href="https://fonts.googleapis.com">`,
@@ -63,6 +67,8 @@ function buildPage(page, spec, images, baseUrl) {
       : "",
     `</head>`,
     `<body>`,
+    `<a href="#main" class="sr-only focus:not-sr-only" style="position:absolute;top:0;left:0;padding:0.5rem;background:var(--brand);color:#fff;z-index:999;">Skip to content</a>`,
+    `<main id="main">`,
   ]
     .filter(Boolean)
     .join("\n");
@@ -100,7 +106,7 @@ function buildPage(page, spec, images, baseUrl) {
 
   const scripts = `<script defer src="js/app.js"></script>`;
 
-  return [head, bodySections, scripts, `</body>`, `</html>`].join("\n");
+  return [head, bodySections, scripts, `</main>`, `</body>`, `</html>`].join("\n");
 }
 
 /** Build the full CSS: tokens + base + section CSS + app CSS. */
@@ -162,6 +168,8 @@ function buildCss(spec, usedSections) {
   }
 
   lines.push("/** App overrides */");
+  lines.push(".container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }");
+  lines.push("@media (max-width: 768px) { .container { padding: 0 1rem; } }");
   lines.push(".form-message { min-height: 1.2em; }");
   lines.push(".success-message { font-weight: 600; color: var(--brand); }");
   lines.push(
@@ -170,6 +178,7 @@ function buildCss(spec, usedSections) {
   lines.push(".btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }");
   lines.push(
     "@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }",
+    "@media print { body { background: #fff; color: #000; } .nav-section, .nav-toggle { display: none; } a { text-decoration: underline; } }",
   );
 
   return lines.join("\n") + "\n";

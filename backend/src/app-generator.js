@@ -163,7 +163,7 @@ app.listen(process.env.PORT || 3000, () => console.log('${app.name} running on p
   </main>
   <script>
     const API = '';
-    async function api(path, opts) { const r = await fetch(API + path, { headers: {'Content-Type':'application/json'}, ...opts }); return r.json(); }
+    async function api(path, opts) { try { const r = await fetch(API + path, { headers: {'Content-Type':'application/json'}, ...opts }); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); } catch(e) { console.error(e); return { error: e.message }; } }
     async function loadDashboard() {
       const d = await api('/api/dashboard');
       const el = document.getElementById('dashboard');
@@ -174,6 +174,7 @@ app.listen(process.env.PORT || 3000, () => console.log('${app.name} running on p
       const d = await api('/api/' + table);
       const el = document.getElementById(table + '-list');
       if (!el) return;
+      el.innerHTML = '<div class="p-3 text-gray-400">Loading...</div>';
       const items = d.data || d;
       el.innerHTML = items.map(i => '<div class="flex items-center justify-between p-3 border-b hover:bg-gray-50"><span class="font-medium">' + (i.name || i.id) + '</span><div class="flex gap-2"><button onclick="editItem(\\'' + table + '\\',' + i.id + ')" class="text-blue-500 text-sm">Edit</button><button onclick="deleteItem(\\'' + table + '\\',' + i.id + ')" class="text-red-500 text-sm">Delete</button></div></div>').join('') || '<p class="text-gray-400 p-3">No items yet</p>';
     }

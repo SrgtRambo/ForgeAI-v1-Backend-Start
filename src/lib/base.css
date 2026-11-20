@@ -1,0 +1,160 @@
+/* Forge AI - Base Stylesheet */
+@import "./theme.css";
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-subtle);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--muted);
+  border-radius: var(--radius-md);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-ink);
+}
+
+/* Background */
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+/* Link styles */
+a {
+  color: var(--brand);
+  text-decoration: none;
+  transition: var(--transition-fast);
+}
+a:hover {
+  color: var(--brand-hover);
+}
+
+/* Button styles */
+.btn {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: var(--space-sm) var(--space-lg);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+.btn:focus-visible {
+  outline: 2px var(--brand) solid;
+  outline-offset: 2px;
+}
+.btn:hover {
+  transform: translateY(-1px);
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Primary button */
+.btn-primary {
+  background: var(--brand);
+  color: var(--bg);
+}
+.btn-primary:hover {
+  background: var(--brand-hover);
+}
+
+/* Secondary button */
+.btn-secondary {
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--muted);
+}
+.btn-secondary:hover {
+  background: var(--card-hover);
+}
+
+/* Input styles */
+.input {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--muted);
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  color: var(--ink);
+  width: 100%;
+  transition: var(--transition-fast);
+}
+.input:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1);
+}
+
+/* Card styles */
+.card {
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+}
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* Header styles */
+header {
+  background: var(--bg);
+  padding: var(--space-md) 0;
+  border-bottom: 1px solid var(--muted);
+}
+
+/* Section styles */
+section {
+  padding: var(--space-xl) 0;
+}
+
+/* Utility classes */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 300ms var(--transition-fast) forwards;
+}
+
+/* Grid utilities */
+.grid {
+  display: grid;
+}
+.grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+/* Mobile-first breakpoints */
+@media (min-width: 640px) { .sm\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 768px) { sm\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1024px) { lg\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); } }

@@ -1,4 +1,80 @@
-<div class="shell">
+<div <style>
+/* Forge AI Theme */
+:root {
+  --bg: #0a0f1a;
+  --bg-subtle: #111827;
+  --card: #161d2a;
+  --chart: #4F46E5;
+  --muted: #6b7280;
+  --ink: #F9FAFB;
+  --border: #D1D5DB;
+}
+
+* { box-sizing: border-box; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-subtle); }
+::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 4px; }
+
+/* Links */
+a { color: var(--chart); text-decoration: none; transition: 0.2s; }
+a:hover { color: #a78bfa; }
+
+/* Buttons */
+.btn { font-family: "Inter Variable", system-ui, sans-serif; font-weight: 600; font-size: 87.5%; padding: 8px 16px; border: none; border-radius: 12px; cursor: pointer; transition: 200ms; display: inline-flex; align-items: center; gap: 8px; }
+.btn:focus-visible { outline: 2px var(--chart) solid; outline-offset: 4px; }
+.btn:hover { transform: translateY(-1px); }
+.btn-primary { background: var(--chart); color: #fff; }
+.btn-primary:hover { background: #a78bfa; }
+.btn-secondary { background: var(--card); color: var(--ink); border: 1px solid var(--border); }
+.btn-secondary:hover { background: #1e293b; }
+
+/* Inputs */
+.input { font-family: "Inter Variable", system-ui, sans-serif; font-size: 87.5%; padding: 8px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-subtle); color: var(--ink); width: 100%; transition: 200ms; }
+.input:focus { outline: none; border-color: var(--chart); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+
+/* Cards */
+.card { background: var(--card); border-radius: 16px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: 200ms; }
+.card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+
+/* Header */
+header { background: var(--bg); padding: 16px 0; border-bottom: 1px solid var(--border); }
+
+/* Grid */
+.grid { display: grid; }
+.grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+
+/* Stat cards */
+.stat { text-align: center; }
+.stat-value { font-size: 24px; font-weight: 700; color: var(--chart); }
+
+/* Nav */
+.nav { padding: 8px 12px; cursor: pointer; border-radius: 12px; margin: 4px; }
+.nav.active { background: var(--chart); color: var(--bg); }
+
+/* Feature list */
+.feature-list li { margin-bottom: 12px; padding-left: 24px; position: relative; }
+.feature-list li::before { content: '✓'; position: absolute; left: 0; color: var(--chart); }
+
+/* AI Chat Panel */
+.ai-chat-panel { background: var(--card); border-radius: 16px; padding: 16px; margin-top: 16px; border: 1px solid var(--border); }
+.ai-chat-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.ai-chat-header h3 { margin: 0; font-size: 14px; }
+.ai-chat-subtitle { font-size: 11px; color: var(--muted); }
+.ai-chat-messages { max-height: 200px; overflow-y: auto; padding: 8px; background: var(--bg-subtle); border-radius: 8px; margin-bottom: 12px; font-size: 13px; }
+.ai-chat-message { margin-bottom: 8px; padding: 8px 12px; border-radius: 8px; line-height: 1.4; }
+.ai-chat-message.user { background: var(--chart); color: #fff; text-align: right; }
+.ai-chat-message.assistant { background: var(--bg-subtle); color: var(--ink); }
+.ai-chat-input-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.ai-chat-input-row .input { flex: 1; }
+.ai-chat-presets { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ai-chat-presets .btn { font-size: 11px; padding: 6px 10px; }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) { * { animation-duration: 0ms !important; transition-duration: 0ms !important; } }
+class="shell">
 <aside class="sidebar"><div class="logo">FORGE <b>AI.</b></div>
 <div class="section-label">WORKSPACE</div>
 <button class="nav active" data-view="overview"><span>◈</span>Overview</button>
@@ -13,10 +89,10 @@
 <div class="progress" aria-label="Project workflow"><span class="step" data-step="discovery">1 · Discovery</span><span class="step" data-step="architect">2 · Architecture</span><span class="step" data-step="generator">3 · Generate</span><span class="step" data-step="testing">4 · Test & preview</span></div>
 
 <section class="view active" id="view-overview">
-<div class="intro"><h1>Your software workspace</h1><p>Pick up where you left off, create something new, or preview a saved project.</p></div>
+<div class="intro"><h1>Forge AI Studio</h1><p>Pick up where you left off, create something new, or preview a saved project.</p></div>
 <div class="stats"><article class="stat"><div class="stat-label">PROJECTS</div><div class="stat-value" id="statProjects">0</div><div class="stat-note">Saved to your account</div></article><article class="stat"><div class="stat-label">CURRENT STAGE</div><div class="stat-value" id="statStage">Start</div><div class="stat-note" id="statProjectName">No project selected</div></article><article class="stat"><div class="stat-label">PROJECT FILES</div><div class="stat-value" id="statFiles">0</div><div class="stat-note" id="statFilesNote">Files saved for the selected project</div></article></div>
 <div class="dashboard-grid">
-<article class="card dashboard-primary"><span class="eyebrow">YOUR NEXT STEP</span><h2 id="dashboardNextTitle" style="margin-top:8px">Start with a business idea</h2><p id="dashboardNextDescription" class="card-desc">Describe what the software should help with. Forge will guide you through requirements, architecture, generation, and testing.</p><div class="overview-actions"><button class="btn primary" id="dashboardContinue">Start business discovery →</button><button class="btn" data-go="projects">Browse all projects</button></div></article>
+<article class="card dashboard-primary"><span class="eyebrow">YOUR NEXT STEP</span><h2 id="dashboardNextTitle" style="margin-top:8px">Describe your software idea</h2><p id="dashboardNextDescription" class="card-desc">Describe what the software should help with. Forge will guide you through requirements, architecture, generation, and testing.</p><div class="overview-actions"><button class="btn primary" id="dashboardContinue">Start business discovery →</button><button class="btn" data-go="projects">Browse all projects</button></div></article>
 <article class="card"><div class="view-head"><div><h2>Recent projects</h2><p>Open a project to see its preview and progress.</p></div></div><div id="dashboardProjectList" class="dashboard-projects"><div class="empty">Your saved projects will appear here.</div></div></article>
 <article class="card"><h2>How Forge works</h2><p class="card-desc">Start with an idea, review the plan, then build and test your app. You can explore the visual preview without opening the source code.</p><ul class="feature-list"><li>Discovery and architecture before generation</li><li>Forge AI generation or a clearly labeled offline starter</li><li>Preview, test, and download a project ZIP</li></ul></article>
 <article class="card"><h2>Try a sample app</h2><p class="card-desc">Explore fictional business examples built with Forge’s offline generator.</p><div class="overview-actions"><button class="btn" data-go="projects">Browse sample projects →</button></div></article>
@@ -30,12 +106,12 @@
 <div class="field full"><label for="problem">Biggest operational problem *</label><textarea id="problem" required placeholder="Describe the problem you want software to solve."></textarea></div><div class="field full"><label for="workflow">Current workflow</label><textarea id="workflow" placeholder="What steps happen today, and who does them?"></textarea></div>
 <div class="field full"><label for="goal">Desired software outcome *</label><textarea id="goal" required placeholder="What should the software help people accomplish?"></textarea></div><div class="field full"><label for="features">Required features</label><textarea id="features" placeholder="List must-have actions or capabilities."></textarea></div>
 <div class="field"><label for="users">User roles and permissions</label><input class="input" id="users" placeholder="Owner, coordinator, field staff"></div><div class="field"><label for="success">How will success be measured?</label><input class="input" id="success" placeholder="Fewer missed follow-ups"></div><div class="field full"><label for="constraints">Important constraints</label><textarea id="constraints" placeholder="Devices, privacy, budget, offline use, or tools this needs to fit."></textarea></div>
-</div><div class="btn-row"><button class="btn primary" type="submit">Create requirements & draft architecture →</button><button class="btn" type="button" id="resetDiscovery">Clear form</button></div></form><div id="followupPanel" class="card hidden" style="margin-top:14px"><h2>AI follow-up questions</h2><p class="card-desc">Answer what you can. These answers will be included in the architecture draft.</p><form id="followupForm"><div id="followupQuestions" class="stack"></div><div class="btn-row"><button id="submitFollowup" class="btn primary" type="submit">Use answers & draft architecture</button><button id="skipFollowup" class="btn" type="button">Continue without answers</button></div></form></div><div id="discoveryNotice" class="notice hidden"></div></section>
+</div><div class="btn-row"><button class="btn primary" type="submit">Continue to Architecture</button><button class="btn" type="button" id="resetDiscovery">Clear form</button></div></form><div id="followupPanel" class="card hidden" style="margin-top:14px"><h2>AI follow-up questions</h2><p class="card-desc">Answer what you can. These answers will be included in the architecture draft.</p><form id="followupForm"><div id="followupQuestions" class="stack"></div><div class="btn-row"><button id="submitFollowup" class="btn primary" type="submit">Use answers & draft architecture</button><button id="skipFollowup" class="btn" type="button">Continue without answers</button></div></form></div><div id="discoveryNotice" class="notice hidden"></div></section>
 
 <section class="view" id="view-architect"><div class="view-head"><div><h1>Project Architect</h1><p>Review a blueprint derived from the discovery answers before approving generation.</p></div><span id="architectureStatus" class="status">WAITING FOR DISCOVERY</span></div><div class="grid"><article class="card"><h2>Project requirements</h2><div id="requirementsSummary" class="output">Complete Discovery to create requirements.</div></article><article class="card"><h2>Architecture blueprint</h2><div id="architectureReport" class="output">Your tailored blueprint will appear here.</div><label class="check"><input type="checkbox" id="approveCheck"><span>I reviewed this architecture and approve generating the application.</span></label><div class="btn-row"><button class="btn primary" id="approveArchitecture" disabled>Approve architecture</button><button class="btn" data-go="discovery">Edit discovery</button></div><div id="architectNotice" class="notice hidden"></div></article></div></section>
 
 <section class="view" id="view-generator">
-<div class="view-head"><div><h1>Software Generator</h1><p>Build your app on the left and explore it in the preview on the right.</p></div><span id="generatorStatus" class="status">APPROVAL REQUIRED</span></div>
+<div class="view-head"><div><h1>Software Generator</h1><p>Build your app on the left and explore it in the preview on the right.</p></div><span id="generatorStatus" class="status">Ready for Generation</span></div>
 <div class="generator-workspace">
 <div class="generator-primary">
 <article class="card"><h2 id="generatorProject">No project selected</h2><p class="card-desc">Generate custom HTML, styling, and behavior with Forge AI, or use the clearly labeled offline starter. Your project is saved to your account; save it to a folder or download its ZIP for a local copy.</p>
@@ -43,9 +119,176 @@
 <div class="btn-row"><button id="generateProject" class="btn primary" disabled>Generate project files…</button><button id="saveProjectFolder" class="btn hidden" disabled>Save project to a folder…</button><button id="downloadProjectZip" class="btn hidden" disabled>Download project ZIP</button><button class="btn" data-go="projects">Open an existing project</button></div><div id="generatorNotice" class="notice hidden"></div></article>
 <details id="versionHistoryPanel" class="card project-tools"><summary>Version history</summary><div><p class="card-desc">Each saved version keeps a restorable copy of the project's source files.</p><div id="versionHistory" class="test-list"><div class="empty">Generate or open a project to view its versions.</div></div></div></details>
 </div>
-<aside id="previewWrap" class="card generator-preview"><div class="preview-toolbar"><div><h2>Live app preview</h2><p id="previewStatus" class="card-desc">Generate or open a project to explore it here.</p></div><button class="btn" id="refreshPreview" disabled>Refresh</button></div><div id="previewEmpty" class="preview-empty"><div><strong>Your app will appear here</strong>Open a saved project or generate one to explore its screens without leaving Forge.</div></div><iframe id="preview" class="preview-frame hidden" title="Generated application preview" sandbox="allow-scripts allow-forms allow-modals"></iframe></aside>
+<aside id="previewWrap" class="card generator-preview"><div class="preview-toolbar"><div><h2>Live app preview</h2><p id="previewStatus" class="card-desc">Generate or open a project to explore it here.</p></div><button class="btn" id="refreshPreview" disabled>Refresh</button></div><div id="previewEmpty" class="preview-empty">
+<script>
+/* WebSocket for live preview updates */
+var ws = new WebSocket('ws://' + location.host + '/ws');
+ws.onopen = function() {
+  console.log('WS connected - live preview enabled');
+  var ps = document.getElementById('previewStatus');
+  if (ps) { ps.textContent = 'Live preview active'; ps.style.color = 'var(--accent)'; }
+};
+ws.onmessage = function(event) {
+  var data = JSON.parse(event.data);
+  if (data.type === 'preview_update') {
+    var preview = document.getElementById('preview').contentDocument || document.getElementById('preview').contentWindow.document;
+    if (data.html) { preview.body.innerHTML = data.html; }
+    if (data.css) {
+      var style = preview.querySelector('style') || preview.createElement('style');
+      style.textContent = data.css;
+      preview.head.appendChild(style);
+    }
+    if (data.js) {
+      var oldScripts = preview.querySelectorAll('script');
+      oldScripts.forEach(function(s) { s.remove(); });
+      if (data.js.main) {
+        var script = preview.createElement('script');
+        script.textContent = data.js.main;
+        preview.body.appendChild(script);
+      }
+    }
+  }
+};
+ws.onclose = function() {
+  var ps = document.getElementById('previewStatus');
+  if (ps) { ps.textContent = 'Preview disconnected'; ps.style.color = 'var(--muted)'; }
+};
+ws.onerror = function(error) {
+  console.error('WS error:', error);
+  var ps = document.getElementById('previewStatus');
+  if (ps) { ps.textContent = 'Preview error'; ps.style.color = 'var(--error)'; }
+};
+</script>
+<script>
+/* AI Chat panel for live preview revisions */
+(function() {
+  var currentBriefId = null;
+  var chatInput = document.getElementById('aiChatInput');
+  var chatSend = document.getElementById('aiChatSend');
+  var chatMessages = document.getElementById('aiChatMessages');
+  var aiChatPanel = document.getElementById('aiChatPanel');
+
+  function addMessage(role, text) {
+    var div = document.createElement('div');
+    div.className = 'ai-chat-message ' + role;
+    div.textContent = text;
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function sendMessage() {
+    var text = chatInput.value.trim();
+    if (!text || !currentBriefId) return;
+    chatInput.value = '';
+    addMessage('user', text);
+    addMessage('assistant', 'Thinking…');
+    var lastMsg = chatMessages.lastChild;
+
+    fetch('/api/forge/revise', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ briefId: currentBriefId, instruction: text })
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.files) {
+          applyRevisions(data.files);
+          lastMsg.textContent = 'Done! Changes applied to preview.';
+        } else {
+          lastMsg.textContent = 'Error: ' + (data.error || 'Unknown error');
+        }
+      })
+      .catch(function(err) {
+        lastMsg.textContent = 'Error: ' + err.message;
+      });
+  }
+
+  function applyRevisions(files) {
+    var preview = document.getElementById('preview');
+    var doc = preview.contentDocument || preview.contentWindow.document;
+    for (var path in files) {
+      if (path.endsWith('.css')) {
+        var style = doc.querySelector('style[data-forge-generated]') || doc.createElement('style');
+        style.setAttribute('data-forge-generated', 'true');
+        style.textContent = files[path];
+        doc.head.appendChild(style);
+      } else if (path.endsWith('.js')) {
+        var oldScripts = doc.querySelectorAll('script[data-forge-generated]');
+        oldScripts.forEach(function(s) { s.remove(); });
+        var script = doc.createElement('script');
+        script.setAttribute('data-forge-generated', 'true');
+        script.textContent = files[path];
+        doc.body.appendChild(script);
+      } else if (path.endsWith('.html')) {
+        var parser = new DOMParser();
+        var newDoc = parser.parseFromString(files[path], 'text/html');
+        if (newDoc.body) {
+          doc.body.innerHTML = newDoc.body.innerHTML;
+        }
+        if (newDoc.head) {
+          var newStyles = newDoc.head.querySelectorAll('link[rel="stylesheet"], style');
+          newStyles.forEach(function(s) {
+            if (s.tagName === 'STYLE') {
+              var style = doc.createElement('style');
+              style.textContent = s.textContent;
+              style.setAttribute('data-forge-generated', 'true');
+              doc.head.appendChild(style);
+            }
+          });
+        }
+      }
+    }
+  }
+
+  chatSend.addEventListener('click', sendMessage);
+  chatInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  document.querySelectorAll('[data-ai-preset]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      chatInput.value = btn.dataset.aiPreset === 'darken' ? 'Make the background darker with a dark theme' :
+        btn.dataset.aiPreset === 'brighten' ? 'Make the design brighter and more vibrant' :
+        btn.dataset.aiPreset === 'modern' ? 'Apply a modern, clean design with good typography' :
+        btn.dataset.aiPreset === 'warm' ? 'Use a warm, inviting color palette' :
+        '';
+      sendMessage();
+    });
+  });
+
+  var checkBrief = setInterval(function() {
+    if (window.ForgeCurrentProject && window.ForgeCurrentProject.briefId) {
+      currentBriefId = window.ForgeCurrentProject.briefId;
+      clearInterval(checkBrief);
+    }
+  }, 1000);
+})();
+</script>
+<div><strong>Your app will appear here</strong>Open a saved project or generate one to explore its screens without leaving Forge.</div></div><iframe id="preview" class="preview-frame hidden" title="Generated application preview" sandbox="allow-scripts allow-forms allow-modals"></iframe></aside>
 </div>
 <details id="sourceEditorPanel" class="card project-tools" style="margin-top:14px"><summary>Advanced: view or edit project source</summary><div><p class="card-desc editor-help">This is the app's actual HTML, CSS, and JavaScript code. Most of the time you can just use the preview. Open this only to inspect or edit code; edits appear in the preview before you save them.</p><div class="field"><label for="filePicker">Project file</label><select id="filePicker" class="input" disabled><option>Select a project first</option></select></div><textarea id="sourceEditor" class="editor" spellcheck="false" placeholder="Generated project source appears here."></textarea><div class="btn-row"><button id="saveSource" class="btn primary" disabled>Save file</button><span id="editorStatus" class="tiny muted"></span></div></div></details>
+<div class="ai-chat-panel" id="aiChatPanel">
+  <div class="ai-chat-header">
+    <h3>AI Stylist</h3>
+    <span class="ai-chat-subtitle">Ask Forge AI to change anything in the preview</span>
+  </div>
+  <div class="ai-chat-messages" id="aiChatMessages"></div>
+  <div class="ai-chat-input-row">
+    <input type="text" id="aiChatInput" class="input" placeholder="e.g. Make the background darker, use a warmer color palette, add a hero section" autocomplete="off">
+    <button class="btn primary" id="aiChatSend">Send</button>
+  </div>
+  <div class="ai-chat-presets">
+    <span class="tiny muted">Quick:</span>
+    <button class="btn" data-ai-preset="darken">Make darker</button>
+    <button class="btn" data-ai-preset="brighten">Brighten</button>
+    <button class="btn" data-ai-preset="modern">Modern style</button>
+    <button class="btn" data-ai-preset="warm">Warm palette</button>
+  </div>
+</div>
 </section>
 
 <section class="view" id="view-testing"><div class="view-head"><div><h1>Testing Agent</h1><p>Run honest local checks against the generated files and their references. The app preview stays beside the generator workspace.</p></div><span id="testStatus" class="status">NO TESTS RUN</span></div><div class="grid"><article class="card"><h2>Project checks</h2><p class="card-desc">Checks file presence, HTML structure and references, JavaScript parseability, and core workflow markers.</p><div class="btn-row"><button id="runTests" class="btn primary" disabled>Run project tests</button><button id="showPreview" class="btn" disabled>View app in generator</button></div><div id="testResults" class="test-list" style="margin-top:14px"><div class="empty">Generate or open a project to run checks.</div></div></article><article class="card"><h2>Test summary</h2><div class="stats"><article class="stat"><div class="stat-label">COMPLETED</div><div class="stat-value" id="testsCompleted">0</div></article><article class="stat"><div class="stat-label">PASSED</div><div class="stat-value" id="testsPassed">0</div></article><article class="stat"><div class="stat-label">FAILED</div><div class="stat-value" id="testsFailed">0</div></article></div><div id="testAdvice" class="notice">Tests have not been run.</div></article></div></section>
