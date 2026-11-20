@@ -9,6 +9,7 @@ import { extractJson, stripCodeFence } from "./text.js";
 export const ENGINE_LIMITS = {
   planTokens: 3000,
   maxContinuations: 3,
+  maxFileRetries: 2,
   fileConcurrency: 3,
 };
 
@@ -117,6 +118,7 @@ async function writeFile({ chat, model, prompt, type, tier, plan, file }) {
     },
   ];
   let output = "";
+  // Initial attempt
   for (let round = 0; round <= ENGINE_LIMITS.maxContinuations; round++) {
     const { content, finishReason } = await chat({ model, messages, maxTokens: maxFileTokens });
     const piece = round === 0 ? stripCodeFence(content) : content.replace(/^```[\w.+-]*\r?\n/, "");
@@ -137,8 +139,60 @@ async function writeFile({ chat, model, prompt, type, tier, plan, file }) {
       },
     );
   }
+  // All continuations exhausted — retry the entire file with a smaller token budget
+  const smallerTokens = Math.max(500, Math.floor(maxFileTokens / 2));
+  for (let retry = 0; retry < ENGINE_LIMITS.maxFileRetries; retry++) {
+        let retryMessages = [
+          {
+            role: "system",
+            content:
+              "You write exactly one file of a multi-file project. Reply with ONLY the raw file contents: " +
+              "no Markdown code fences, no explanations before or after. The file must be complete, valid, and consistent with the shared contract and the other files. " +
+              "Never emit placeholder comments (e.g. /* TODO */) or truncated ellipses; implement every function, style rule, and UI element in full. Write the complete file in a single response; do not continue across multiple turns.",
+          },
+          {
+            role: "user",
+            content: [
+              brief(prompt, archetype),
+              "",
+              `Project: ${plan.name} — ${plan.summary}`,
+              "",
+              "Shared contract (follow it exactly):",
+              plan.contract || "(none)",
+              "",
+              "All project files:",
+              ...plan.files.map((f) => `- ${f.path}: ${f.purpose}`),
+              "",
+              `Now write the complete contents of ${file.path} (${file.purpose}).`,
+            ].join("\n"),
+          },
+        ];
+    let retryOutput = "";
+    for (let round = 0; round <= ENGINE_LIMITS.maxContinuations; round++) {
+      const { content, finishReason } = await chat({ model, messages: retryMessages, maxTokens: smallerTokens });
+      const piece = round === 0 ? stripCodeFence(content) : content.replace(/^```[\w.+-]*\r?\n/, "");
+      retryOutput += piece;
+      if (finishReason !== "length") {
+        retryOutput = stripCodeFence(retryOutput);
+        if (!retryOutput.trim()) throw new GenerationError(`The AI returned an empty ${file.path} even after retry.`);
+        if (Buffer.byteLength(retryOutput) > MAX_FILE_BYTES)
+          throw new GenerationError(`${file.path} came out too large even after retry.`);
+        return retryOutput.endsWith("\n") ? retryOutput : retryOutput + "\n";
+      }
+      retryMessages.push(
+        { role: "assistant", content },
+        {
+          role: "user",
+          content:
+            "Continue exactly where you stopped. Output only the remaining content, without repeating anything and without code fences.",
+        },
+      );
+    }
+    // Even the retry with smaller tokens failed; try one more time with just the core prompt
+    if (retry < ENGINE_LIMITS.maxFileRetries - 1) continue;
+  }
   throw new GenerationError(
-    `${file.path} was still incomplete after ${ENGINE_LIMITS.maxContinuations} continuations.`,
+    `${file.path} was still incomplete after ${ENGINE_LIMITS.maxContinuations} continuations and ${ENGINE_LIMITS.maxFileRetries} retries with reduced token budget.`,
   );
 }
 

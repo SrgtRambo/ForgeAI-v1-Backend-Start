@@ -97,9 +97,6 @@ const upload = multer({
 
 export function createApp({ config, db, stripe, jobs, chat, analyzer, unsplash, pexels }) {
   const app = express();
-  // WebSocket setup
-  const { initializeWebSocket } = require("./ws-handler.js");
-  initializeWebSocket(app);
   const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200, standardHeaders: true, legacyHeaders: false });
   app.use('/api/', apiLimiter);
   app.use((req, _res, next) => {
@@ -2857,6 +2854,104 @@ Stage: ${proj.stage || "complete"}`);
     }),
   );
 
+  app.post(
+    "/api/forge/revise",
+    requireUser,
+    handle(async (req, res) => {
+      if (!config.aiConfigured) {
+        return res.status(503).json({ error: "Forge AI is not configured." });
+      }
+      const { briefId, instruction, file } = req.body || {};
+      if (!briefId || !instruction) {
+        return res.status(400).json({ error: "briefId and instruction are required." });
+      }
+
+      const briefRows = await db.query(
+        `select id, spec from site_briefs where id = $1 and user_id = $2`,
+        [briefId, req.user.id],
+      );
+      if (!briefRows[0]) return res.status(404).json({ error: "Brief not found." });
+
+      const spec = briefRows[0].spec;
+      const result = validateSpec(spec);
+      if (!result.ok) {
+        return res.status(422).json({ error: "Brief spec is invalid.", errors: result.errors });
+      }
+
+      // Build current files from spec to give context
+      const images = [];
+      const assetRows = await db.query(
+        `select slot_id, source, storage_key, credit from site_image_assets where brief_id = $1`,
+        [briefId],
+      );
+      const unsplash = createUnsplashProvider({ accessKey: process.env.UNSPLASH_ACCESS_KEY });
+      const pexels = createPexelsProvider({ accessKey: process.env.PEXELS_API_KEY });
+      for (const asset of assetRows) {
+        if (asset.source === "stock") {
+          const slot = spec.images?.find((i) => i.id === asset.slot_id);
+          if (slot) {
+            const result = await resolveAndDownload({
+              slot,
+              destPath: `/tmp/${briefId}-${asset.slot_id}.jpg`,
+              unsplash,
+              pexels,
+            });
+            if (result.filePath) {
+              images.push({ id: asset.slot_id, slot: asset.slot_id, source: "stock", filePath: result.filePath, credit: result.credit });
+            }
+          }
+        } else if (asset.source === "upload" || asset.source === "url") {
+          const obj = await storageGet(asset.storage_key);
+          if (obj) {
+            images.push({ id: asset.slot_id, slot: asset.slot_id, source: asset.source, filePath: `assets/images/${asset.slot_id}.jpg`, credit: asset.credit || {}, _buffer: obj.buffer });
+          }
+        }
+      }
+
+      const { files: builtFiles } = await buildSite(spec, images, { baseUrl: config.baseUrl });
+
+      // If file is specified, only rewrite that file; otherwise let AI pick
+      const targetFiles = file ? [file] : Object.keys(builtFiles).filter((f) => f.endsWith(".html") || f.endsWith(".css") || f.endsWith(".js"));
+
+      // Ask AI to revise the specific file(s)
+      const modelChat = createMultiProviderChat({ referer: config.frontendUrl });
+      const revisedFiles = {};
+
+      for (const targetFile of targetFiles) {
+        const currentContent = builtFiles[targetFile];
+        const messages = [
+          {
+            role: "system",
+            content:
+              "You are a web developer. You are given a complete file from a generated website and a user instruction to change something specific. " +
+              "Return ONLY the complete revised file contents. No explanations, no code fences. Keep all existing functionality intact unless the instruction explicitly says otherwise.",
+          },
+          {
+            role: "user",
+            content: [
+              `File: ${targetFile}`,
+              `Instruction: ${instruction}`,
+              "",
+              "Current file contents:",
+              currentContent,
+            ].join("\n"),
+          },
+        ];
+        const { content, finishReason } = await modelChat({
+          model: config.modelStandard,
+          messages,
+          maxTokens: 8000,
+          json: false,
+          temperature: 0.3,
+        });
+        const revised = stripCodeFence(content);
+        if (revised.trim()) revisedFiles[targetFile] = revised;
+      }
+
+      res.json({ files: revisedFiles });
+    }),
+  );
+
   // Multer error handler (e.g. file too large)
   app.use((err, req, res, next) => {
     if (err.code === "LIMIT_FILE_SIZE") {
@@ -2875,14 +2970,15 @@ async function main() {
   const stripe = config.paymentsEnabled ? new Stripe(config.stripeSecretKey) : null;
   const chat = createMultiProviderChat({ referer: config.frontendUrl });
   const jobs = createJobRunner({ db, config, chat });
-  const app = createApp({ config, db, stripe, jobs });
-  app.listen(config.port, async () => {
+  const app = createApp({ config, db, stripe, jobs, chat });
+  const server = app.listen(config.port, async () => {
     console.log(`Forge AI backend listening on ${config.baseUrl}`);
     if (!stripe) console.log("Payments are off (add STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET to turn them on).");
 
     const resumed = await jobs.recover().catch((err) => (console.error("[jobs] recover failed", err), 0));
     if (resumed) console.log(`Resumed ${resumed} unfinished job(s).`);
   });
+  initializeWebSocket(server);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {

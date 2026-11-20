@@ -58,8 +58,22 @@ header { background: var(--bg); padding: 16px 0; border-bottom: 1px solid var(--
 .feature-list li { margin-bottom: 12px; padding-left: 24px; position: relative; }
 .feature-list li::before { content: '✓'; position: absolute; left: 0; color: var(--chart); }
 
+/* AI Chat Panel */
+.ai-chat-panel { background: var(--card); border-radius: 16px; padding: 16px; margin-top: 16px; border: 1px solid var(--border); }
+.ai-chat-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.ai-chat-header h3 { margin: 0; font-size: 14px; }
+.ai-chat-subtitle { font-size: 11px; color: var(--muted); }
+.ai-chat-messages { max-height: 200px; overflow-y: auto; padding: 8px; background: var(--bg-subtle); border-radius: 8px; margin-bottom: 12px; font-size: 13px; }
+.ai-chat-message { margin-bottom: 8px; padding: 8px 12px; border-radius: 8px; line-height: 1.4; }
+.ai-chat-message.user { background: var(--chart); color: #fff; text-align: right; }
+.ai-chat-message.assistant { background: var(--bg-subtle); color: var(--ink); }
+.ai-chat-input-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.ai-chat-input-row .input { flex: 1; }
+.ai-chat-presets { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ai-chat-presets .btn { font-size: 11px; padding: 6px 10px; }
+
 /* Reduced motion */
-@media (prefers-reduced-motion: reduce) { * { animation-duration: 0ms !important; transition-duration: 0ms !important; } */
+@media (prefers-reduced-motion: reduce) { * { animation-duration: 0ms !important; transition-duration: 0ms !important; } }
 class="shell">
 <aside class="sidebar"><div class="logo">FORGE <b>AI.</b></div>
 <div class="section-label">WORKSPACE</div>
@@ -144,9 +158,137 @@ ws.onerror = function(error) {
   var ps = document.getElementById('previewStatus');
   if (ps) { ps.textContent = 'Preview error'; ps.style.color = 'var(--error)'; }
 };
-</script><div><strong>Your app will appear here</strong>Open a saved project or generate one to explore its screens without leaving Forge.</div></div><iframe id="preview" class="preview-frame hidden" title="Generated application preview" sandbox="allow-scripts allow-forms allow-modals"></iframe></aside>
+</script>
+<script>
+/* AI Chat panel for live preview revisions */
+(function() {
+  var currentBriefId = null;
+  var chatInput = document.getElementById('aiChatInput');
+  var chatSend = document.getElementById('aiChatSend');
+  var chatMessages = document.getElementById('aiChatMessages');
+  var aiChatPanel = document.getElementById('aiChatPanel');
+
+  function addMessage(role, text) {
+    var div = document.createElement('div');
+    div.className = 'ai-chat-message ' + role;
+    div.textContent = text;
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function sendMessage() {
+    var text = chatInput.value.trim();
+    if (!text || !currentBriefId) return;
+    chatInput.value = '';
+    addMessage('user', text);
+    addMessage('assistant', 'Thinking…');
+    var lastMsg = chatMessages.lastChild;
+
+    fetch('/api/forge/revise', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ briefId: currentBriefId, instruction: text })
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.files) {
+          applyRevisions(data.files);
+          lastMsg.textContent = 'Done! Changes applied to preview.';
+        } else {
+          lastMsg.textContent = 'Error: ' + (data.error || 'Unknown error');
+        }
+      })
+      .catch(function(err) {
+        lastMsg.textContent = 'Error: ' + err.message;
+      });
+  }
+
+  function applyRevisions(files) {
+    var preview = document.getElementById('preview');
+    var doc = preview.contentDocument || preview.contentWindow.document;
+    for (var path in files) {
+      if (path.endsWith('.css')) {
+        var style = doc.querySelector('style[data-forge-generated]') || doc.createElement('style');
+        style.setAttribute('data-forge-generated', 'true');
+        style.textContent = files[path];
+        doc.head.appendChild(style);
+      } else if (path.endsWith('.js')) {
+        var oldScripts = doc.querySelectorAll('script[data-forge-generated]');
+        oldScripts.forEach(function(s) { s.remove(); });
+        var script = doc.createElement('script');
+        script.setAttribute('data-forge-generated', 'true');
+        script.textContent = files[path];
+        doc.body.appendChild(script);
+      } else if (path.endsWith('.html')) {
+        var parser = new DOMParser();
+        var newDoc = parser.parseFromString(files[path], 'text/html');
+        if (newDoc.body) {
+          doc.body.innerHTML = newDoc.body.innerHTML;
+        }
+        if (newDoc.head) {
+          var newStyles = newDoc.head.querySelectorAll('link[rel="stylesheet"], style');
+          newStyles.forEach(function(s) {
+            if (s.tagName === 'STYLE') {
+              var style = doc.createElement('style');
+              style.textContent = s.textContent;
+              style.setAttribute('data-forge-generated', 'true');
+              doc.head.appendChild(style);
+            }
+          });
+        }
+      }
+    }
+  }
+
+  chatSend.addEventListener('click', sendMessage);
+  chatInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  document.querySelectorAll('[data-ai-preset]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      chatInput.value = btn.dataset.aiPreset === 'darken' ? 'Make the background darker with a dark theme' :
+        btn.dataset.aiPreset === 'brighten' ? 'Make the design brighter and more vibrant' :
+        btn.dataset.aiPreset === 'modern' ? 'Apply a modern, clean design with good typography' :
+        btn.dataset.aiPreset === 'warm' ? 'Use a warm, inviting color palette' :
+        '';
+      sendMessage();
+    });
+  });
+
+  var checkBrief = setInterval(function() {
+    if (window.ForgeCurrentProject && window.ForgeCurrentProject.briefId) {
+      currentBriefId = window.ForgeCurrentProject.briefId;
+      clearInterval(checkBrief);
+    }
+  }, 1000);
+})();
+</script>
+<div><strong>Your app will appear here</strong>Open a saved project or generate one to explore its screens without leaving Forge.</div></div><iframe id="preview" class="preview-frame hidden" title="Generated application preview" sandbox="allow-scripts allow-forms allow-modals"></iframe></aside>
 </div>
 <details id="sourceEditorPanel" class="card project-tools" style="margin-top:14px"><summary>Advanced: view or edit project source</summary><div><p class="card-desc editor-help">This is the app's actual HTML, CSS, and JavaScript code. Most of the time you can just use the preview. Open this only to inspect or edit code; edits appear in the preview before you save them.</p><div class="field"><label for="filePicker">Project file</label><select id="filePicker" class="input" disabled><option>Select a project first</option></select></div><textarea id="sourceEditor" class="editor" spellcheck="false" placeholder="Generated project source appears here."></textarea><div class="btn-row"><button id="saveSource" class="btn primary" disabled>Save file</button><span id="editorStatus" class="tiny muted"></span></div></div></details>
+<div class="ai-chat-panel" id="aiChatPanel">
+  <div class="ai-chat-header">
+    <h3>AI Stylist</h3>
+    <span class="ai-chat-subtitle">Ask Forge AI to change anything in the preview</span>
+  </div>
+  <div class="ai-chat-messages" id="aiChatMessages"></div>
+  <div class="ai-chat-input-row">
+    <input type="text" id="aiChatInput" class="input" placeholder="e.g. Make the background darker, use a warmer color palette, add a hero section" autocomplete="off">
+    <button class="btn primary" id="aiChatSend">Send</button>
+  </div>
+  <div class="ai-chat-presets">
+    <span class="tiny muted">Quick:</span>
+    <button class="btn" data-ai-preset="darken">Make darker</button>
+    <button class="btn" data-ai-preset="brighten">Brighten</button>
+    <button class="btn" data-ai-preset="modern">Modern style</button>
+    <button class="btn" data-ai-preset="warm">Warm palette</button>
+  </div>
+</div>
 </section>
 
 <section class="view" id="view-testing"><div class="view-head"><div><h1>Testing Agent</h1><p>Run honest local checks against the generated files and their references. The app preview stays beside the generator workspace.</p></div><span id="testStatus" class="status">NO TESTS RUN</span></div><div class="grid"><article class="card"><h2>Project checks</h2><p class="card-desc">Checks file presence, HTML structure and references, JavaScript parseability, and core workflow markers.</p><div class="btn-row"><button id="runTests" class="btn primary" disabled>Run project tests</button><button id="showPreview" class="btn" disabled>View app in generator</button></div><div id="testResults" class="test-list" style="margin-top:14px"><div class="empty">Generate or open a project to run checks.</div></div></article><article class="card"><h2>Test summary</h2><div class="stats"><article class="stat"><div class="stat-label">COMPLETED</div><div class="stat-value" id="testsCompleted">0</div></article><article class="stat"><div class="stat-label">PASSED</div><div class="stat-value" id="testsPassed">0</div></article><article class="stat"><div class="stat-label">FAILED</div><div class="stat-value" id="testsFailed">0</div></article></div><div id="testAdvice" class="notice">Tests have not been run.</div></article></div></section>
